@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>میز معاملات Close Call — close-1</title>
+<style>
+  :root {
+    --bg: #0b0e14;
+    --panel: #141a24;
+    --panel2: #1b2331;
+    --line: #263044;
+    --text: #dce3f0;
+    --muted: #8492ab;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --accent: #4da3ff;
+    --amber: #f0b429;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Tahoma, "B Nazanin", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  header {
+    padding: 14px 18px 0;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #101623, #0b0e14);
+  }
+  .top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .brand { font-size: 20px; font-weight: 700; }
+  .brand span { color: var(--accent); font-size: 14px; font-weight: 400; }
+  .pill {
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 2px 12px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .pill.ok { color: var(--green); border-color: #1d5c3a; }
+  .pill.bad { color: var(--red); border-color: #5c2323; }
+  .hud { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 12px 0; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+  .card label { display: block; font-size: 12px; color: var(--muted); }
+  .card .val { font-size: 22px; font-weight: 700; }
+  .card .sub { font-size: 12px; color: var(--muted); }
+  .num { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tabs button {
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    color: var(--muted);
+    padding: 9px 16px;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+  }
+  .tabs button.active {
+    background: var(--panel);
+    border-color: var(--line);
+    color: var(--text);
+  }
+  main { padding: 16px 18px 60px; max-width: 1200px; margin: 0 auto; }
+  .tab { display: none; }
+  .tab.active { display: block; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  h2 { font-size: 16px; margin: 0 0 10px; }
+  h3 { font-size: 15px; margin: 14px 0 8px; color: var(--accent); }
+  .muted { color: var(--muted); font-size: 13px; }
+  .warn { color: var(--amber); font-size: 13px; }
+  .err { color: var(--red); font-size: 13px; }
+  .ok-txt { color: var(--green); font-size: 13px; }
+  input, textarea, select {
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 14px;
+    width: 100%;
+  }
+  input.num-in, textarea.mono, pre, code { direction: ltr; unicode-bidi: isolate; font-family: Consolas, monospace; }
+  textarea { min-height: 84px; resize: vertical; }
+  button.action, button.side {
+    font-family: inherit;
+    font-size: 15px;
+    border: none;
+    border-radius: 9px;
+    padding: 10px 18px;
+    cursor: pointer;
+    background: var(--accent);
+    color: #06121f;
+    font-weight: 700;
+  }
+  button.action:disabled { opacity: .4; cursor: not-allowed; }
+  button.ghost {
+    background: var(--panel2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    font-family: inherit;
+    font-size: 14px;
+    border-radius: 8px;
+    padding: 7px 14px;
+    cursor: pointer;
+  }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .sides { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  button.side { font-size: 19px; padding: 16px; opacity: .55; }
+  button.side.buy.active { background: var(--green); opacity: 1; }
+  button.side.sell.active { background: var(--red); opacity: 1; color: #fff; }
+  pre {
+    background: #0d1119;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-size: 12px;
+    max-height: 240px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: right; }
+  th { color: var(--muted); font-weight: 600; }
+  .badge { border-radius: 6px; padding: 1px 8px; font-size: 12px; font-weight: 700; }
+  .badge.buy { background: #123d26; color: var(--green); }
+  .badge.sell { background: #46191a; color: #ff8f85; }
+  .badge.st { background: #123d26; color: var(--green); }
+  .badge.vo { background: #46191a; color: #ff8f85; }
+  .badge.op { background: #3d3413; color: var(--amber); }
+  .badge.pd { background: #14304d; color: var(--accent); }
+  #toast {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 16px;
+    display: none;
+    max-width: 420px;
+    z-index: 50;
+    font-size: 14px;
+  }
+  .kbd { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; font-size: 13px; }
+  details summary { cursor: pointer; color: var(--accent); }
+  .msg-list .msg { border-bottom: 1px solid var(--line); padding: 6px 0; }
+  .msg .who { color: var(--accent); font-size: 12px; }
+  .bar { height: 6px; background: var(--panel2); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+  .bar > div { height: 100%; background: var(--accent); width: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top">
+    <div class="brand">Close Call — میز معاملات دستی <span>close-1 · NVDA</span></div>
+    <span class="pill" id="keyPill">بدون کلید</span>
+    <span class="pill" id="regPill">ثبت‌نام: نامشخص</span>
+    <span class="pill" id="connPill">اتصال: —</span>
+  </div>
+  <div class="hud">
+    <div class="card">
+      <label>قیمت زنده NVDA (Hyperliquid)</label>
+      <div class="val num" id="hlPx">—</div>
+      <div class="sub num" id="hlSub"></div>
+    </div>
+    <div class="card">
+      <label>مرجع داور (بستهٔ sweep قبل)</label>
+      <div class="val num" id="refPx">—</div>
+      <div class="sub num" id="refSub"></div>
+    </div>
+    <div class="card">
+      <label>محدودهٔ مجاز معامله (±۵٪)</label>
+      <div class="val num" id="limPx">—</div>
+      <div class="sub num" id="limSub"></div>
+      <div class="bar"><div id="limBar"></div></div>
+    </div>
+    <div class="card">
+      <label>sweep فعلی / بعدی</label>
+      <div class="val num" id="sweepN">—</div>
+      <div class="sub num" id="nextSweep"></div>
+    </div>
+    <div class="card">
+      <label>تا قفل‌شدن معاملات (lock)</label>
+      <div class="val num" id="lockIn">—</div>
+      <div class="sub num" id="lockAt"></div>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button data-tab="setup" class="active">راه‌اندازی</button>
+    <button data-tab="trade">معامله (خرید/فروش)</button>
+    <button data-tab="board">تابلو و قیمت</button>
+    <button data-tab="tx">تراکنش‌ها</button>
+    <button data-tab="rooms">اتاق‌ها (خام)</button>
+  </nav>
+</header>
+
+<main>
+
+<section class="tab active" id="tab-setup">
+  <div class="panel">
+    <h2>۱) کلید بازیکن (<code>did:key</code>)</h2>
+    <div id="keyBox" class="muted">هنوز کلیدی ساخته نشده است. برای شرکت در مسابقه یک کلید Ed25519 لازم است — هویت دیگری بررسی نمی‌شود.</div>
+    <div class="row">
+      <button class="action" id="btnNewKey">ساخت کلید جدید</button>
+      <button class="ghost" id="btnReveal" style="display:none">نمایش / کپی کلید خصوصی</button>
+    </div>
+    <details>
+      <summary>ورود کلید موجود (seed)</summary>
+      <div class="row" style="margin-top:8px">
+        <textarea id="seedIn" class="mono" placeholder="seed hex: 64 کاراکتر" style="max-width:480px"></textarea>
+        <button class="ghost" id="btnImport">ورود کلید</button>
+      </div>
+    </details>
+    <p class="warn">کلید خصوصی فقط در همین کامپیوتر (فایل state.json) نگه داشته می‌شود؛ آن را آنلاین آپلود یا جایی کپی نکن. کلید، حساب مسابقهٔ شماست.</p>
+  </div>
+
+  <div class="panel">
+    <h2>۲) ثبت‌نام و دریافت ۱۰,۰۰۰ POLF</h2>
+    <p class="muted">پیام <code>{"t":"owner",…}</code> امضاشده با کلید شما در اتاق ارسال می‌شود؛ در sweep بعدی ۱۰,۰۰۰ POLF به حساب شما می‌ریزد (فقط یک‌بار، تا پیش از lock).</p>
+    <div class="row">
+      <div class="field" style="max-width:260px">
+        <label>اتاق مقصد</label>
+        <input id="regRoom" class="num-in" value="close1">
+      </div>
+      <button class="action" id="btnRegister">ثبت‌نام owner</button>
+    </div>
+    <div id="regOut"></div>
+    <details style="margin-top:8px">
+      <summary>ثبت اتاق اختصاصی معامله (اختیاری)</summary>
+      <div class="row" style="margin-top:8px">
+        <div class="field" style="max-width:260px">
+          <label>نام اتاق شما</label>
+          <input id="ownRoom" class="num-in" placeholder="my-nvda-desk">
+        </div>
+        <button class="ghost" id="btnRegRoom">ثبت اتاق</button>
+      </div>
+      <div class="muted">اتاق از sweep ای که در فهرست d-close1-flow ثبت شد، برای داور حساب می‌شود.</div>
+    </details>
+    <div id="roomRegOut"></div>
+  </div>
+
+  <div class="panel">
+    <h2>۳) قوانین خلاصه</h2>
+    <div class="grid2 muted">
+      <div>• قرارداد: آیندهٔ NVDA، ۱ POLF به ازای هر دلار<br>• حداقل تعداد <span class="num">0.1</span>، گام قیمت/تعداد <span class="num">0.01</span></div>
+      <div>• هر طرف کارمزد <span class="num">1٪</span>؛ اگر بهتر از قیمت بستهٔ sweep معامله کردی، ما به التفاوت پس گرفته می‌شود (clawback)</div>
+      <div>• بدون اهرم؛ هر قرارداد باز، قیمتش را بلوکه می‌کند<br>• قیمت باید داخل ±۵٪ مرجع باشد وگرنه void</div>
+      <div>• sweep هر ۵ دقیقه؛ lock: ۴ اکتبر ۰۹:۰۰ UTC؛ قیمت نهایی S: آخرین ترید قبل از ۱۰:۰۰ UTC</div>
+      <div>• جایزه: سه نفر برتر ۱,۰۰۰,۰۰۰ FLOP بعد از mainnet (ادعا تا ۹۰ روز با همین کلید)</div>
+      <div>• داور: <code id="refDid">—</code></div>
+    </div>
+  </div>
+</section>
+
+<section class="tab" id="tab-trade">
+  <div class="panel">
+    <h2>ثبت دستی معامله (Maker — انتشار پیشنهاد)</h2>
+    <div class="sides">
+      <button class="side buy active" id="btnBuy">خرید (buy)</button>
+      <button class="side sell" id="btnSell">فروش (sell)</button>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>تعداد (qty) — حداقل 0.1</label>
+        <input id="qty" class="num-in" value="1">
+      </div>
+      <div class="field">
+        <label>قیمت (px) — POLF per dollar</label>
+        <input id="px" class="num-in" placeholder="—">
+      </div>
+      <div class="field">
+        <label>طرف مقابل</label>
+        <select id="takerMode">
+          <option value="any">هرکسی (any) — هرکسی می‌تواند قبول کند</option>
+          <option value="named">کلید مشخص</option>
+        </select>
+        <input id="takerDid" class="num-in" placeholder="did:key:z6Mk…" style="display:none; margin-top:6px">
+      </div>
+      <div class="field">
+        <label>تا کدام sweep معتبر باشد (until)</label>
+        <input id="until" class="num-in">
+      </div>
+      <div class="field">
+        <label>اتاق مقصد</label>
+        <input id="tradeRoom" class="num-in" value="close1">
+      </div>
+      <div class="field">
+        <label>پیش‌نمایش کارمزد هر طرف</label>
+        <div id="feePrev" class="muted num">—</div>
+      </div>
+    </div>
+    <div id="tradeWarn" class="err" style="margin:10px 0"></div>
+    <div class="row">
+      <button class="action" id="btnOffer">انتشار پیشنهاد (امضا و ارسال)</button>
+      <span class="muted">پیام <code>t:trade</code> با امضای maker و taker=any در اتاق منتشر می‌شود.</span>
+    </div>
+    <pre id="offerOut" style="display:none"></pre>
+  </div>
+
+  <div class="panel">
+    <h2>پیشنهادهای باز اتاق <span class="num" id="offersRoom">close1</span></h2>
+    <div class="muted">فقط ۳ sweep اخیر flow بررسی می‌شود؛ پیشنهادهای قدیمی‌تر ممکن است قبلاً تسویه شده باشند.</div>
+    <div id="offersBox" class="muted">—</div>
+  </div>
+
+  <div class="panel">
+    <h2>قبول پیشنهاد (Taker)</h2>
+    <p class="muted">JSON پیشنهاد (پیام <code>t:trade</code> بدون taker_sig) را اینجا بچسبانید یا از جدول بالا دکمهٔ «قبول» را بزنید. امضای maker ابتدا بررسی می‌شود، بعد شما countersign می‌کنید.</p>
+    <textarea id="acceptIn" class="mono" placeholder='{"t":"trade","season":"close-1","terms":{…},"taker":"any","maker_sig":"…"}'></textarea>
+    <div class="row">
+      <button class="ghost" id="btnInspect">بررسی پیشنهاد</button>
+      <button class="action" id="btnAccept" disabled>قبول نهایی و ثبت معامله</button>
+    </div>
+    <div id="inspectOut"></div>
+  </div>
+
+  <div class="panel">
+    <h2>پیام امضاشدهٔ آزاد (مذاکره / انتشار دستی)</h2>
+    <div class="row">
+      <textarea id="freeText" class="mono" placeholder='مثلاً یک trade کامل که طرف مقابل فرستاده یا پیام مذاکره…' style="flex:1"></textarea>
+      <div class="field" style="max-width:200px">
+        <label>اتاق</label>
+        <input id="freeRoom" class="num-in" value="close1">
+      </div>
+      <button class="action" id="btnFreePost">ارسال امضاشده</button>
+    </div>
+    <div id="freeOut"></div>
+  </div>
+</section>
+
+<section class="tab" id="tab-board">
+  <div class="panel">
+    <h2>قیمت و sweep</h2>
+    <div class="grid2">
+      <div class="card"><label>مرجع (ref) + زمان آن</label><div class="val num" id="bRef">—</div><div class="sub num" id="bRefSub"></div></div>
+      <div class="card"><label>قیمت جهانی معاملات (global)</label><div class="val num" id="bGlobal">—</div><div class="sub" id="bGlobalSub"></div></div>
+      <div class="card"><label>قیمت زندهٔ آخرین کندل ۱ دقیقه‌ای</label><div class="val num" id="bHl">—</div><div class="sub num" id="bHlSub"></div></div>
+      <div class="card"><label>فاصلهٔ قیمت زنده تا مرجع</label><div class="val num" id="bDist">—</div><div class="sub">خارج از ±۵٪ = void برای معاملات بعدی</div></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>جدول امتیازات (pnl) — ۲۵ برتر</h2>
+    <div id="myScore" class="muted">—</div>
+    <div id="pnlBox" class="muted">—</div>
+  </div>
+  <div class="panel">
+    <h2>پوزیشن‌های باز (positions)</h2>
+    <div id="myPos" class="muted">—</div>
+    <div id="posBox" class="muted">—</div>
+  </div>
+  <div class="panel">
+    <h2>وضعیت دفتر (state)</h2>
+    <div id="stateBox" class="muted">—</div>
+  </div>
+  <div class="panel">
+    <h2>آخرین flow داور</h2>
+    <div id="flowBox" class="muted">—</div>
+  </div>
+</section>
+
+<section class="tab" id="tab-tx">
+  <div class="panel">
+    <h2>تراکنش‌های من</h2>
+    <div class="muted">از ۱۰۰ پیام آخر اتاق close1 + ۳ sweep اخیر flow ساخته می‌شود.</div>
+    <div id="txBox" class="muted">—</div>
+  </div>
+  <div class="panel">
+    <h2>گزارش‌های محلی (عملیات انجام‌شده از این صفحه)</h2>
+    <div id="logBox" class="muted">—</div>
+  </div>
+</section>
+
+<section class="tab" id="tab-rooms">
+  <div class="panel">
+    <h2>مشاهدهٔ خام اتاق‌ها</h2>
+    <div class="row">
+      <select id="roomSel" style="max-width:260px">
+        <option>close1</option>
+        <option>d-close1-price</option>
+        <option>d-close1-flow</option>
+        <option>d-close1-pnl</option>
+        <option>d-close1-positions</option>
+        <option>d-close1-state</option>
+      </select>
+      <button class="ghost" id="btnRoomRefresh">تازه‌سازی</button>
+      <span class="muted" id="roomMeta"></span>
+    </div>
+    <div id="roomBox" class="msg-list muted">—</div>
+  </div>
+</section>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const AMOUNT_RE = /^\d{1,7}(\.\d{1,2})?$/;
+const DID_RE = /^did:key:z6Mk[1-9A-HJ-NP-Za-km-z]{44}$/;
+
+let S = { contest: null, did: null, log: [] };
+let cache = { hl: null, price: null, flows: [], pnl: null, pos: null, close1: null };
+let side = "buy";
+let pxTouched = false, untilTouched = false;
+let polling = false, lastPollOk = false;
+
+function esc(text) {
+  return String(text).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function shortDid(did) {
+  if (!did || typeof did !== "string") return "—";
+  return did.length > 24 ? did.slice(0, 14) + "…" + did.slice(-4) : did;
+}
+function parseObj(msg) {
+  try { return JSON.parse(msg.text); } catch { return null; }
+}
+function lastMsg(resp) {
+  if (!resp || !resp.ok || !resp.data) return null;
+  const msgs = resp.data.messages || [];
+  return msgs.length ? msgs[msgs.length - 1] : null;
+}
+function lsGet(key) {
+  try { return localStorage.getItem(key) === "1"; } catch { return false; }
+}
+function lsSet(key) {
+  try { localStorage.setItem(key, "1"); } catch {}
+}
+function fmtDur(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600),
+        m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  const p = (n) => String(n).padStart(2, "0");
+  return (d ? d + " روز و " : "") + p(h) + ":" + p(m) + ":" + p(s);
+}
+function toast(text, ms = 4000) {
+  const el = $("toast");
+  el.textContent = text;
+  el.style.display = "block";
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = "none"; }, ms);
+}
+async function api(path, opts) {
+  const resp = await fetch(path, opts);
+  let data;
+  try { data = await resp.json(); }
+  catch { throw new Error("پاسخ نامعتبر از سرور محلی"); }
+  return data;
+}
+function post(path, body) {
+  return api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+}
+function room(name, limit) {
+  return api(`/api/room/${encodeURIComponent(name)}?limit=${limit}`);
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); toast("کپی شد"); }
+  catch { toast("کپی ممکن نشد — متن را دستی انتخاب کنید"); }
+}
+
+document.querySelectorAll(".tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    btn.classList.add("active");
+    $("tab-" + btn.dataset.tab).classList.add("active");
+  });
+});
+
+function setStatus(id, text, cls) {
+  const el = $(id);
+  el.textContent = text;
+  el.className = "pill" + (cls ? " " + cls : "");
+}
+
+function renderHeader() {
+  const c = S.contest;
+  const hl = cache.hl;
+  if (hl && hl.ok) {
+    $("hlPx").textContent = hl.px;
+    $("hlSub").textContent = "کندل ۱ دقیقه‌ای · حجم " + (hl.volume || "—");
+  } else {
+    $("hlPx").textContent = "—";
+    $("hlSub").textContent = (hl && hl.error) ? "خطا در دریافت" : "";
+  }
+
+  const price = cache.price ? parseObj(cache.price) : null;
+  let lo = null, hi = null, ref = null;
+  if (price && price.t === "price") {
+    ref = price.ref && price.ref.px;
+    $("refPx").textContent = ref || "—";
+    $("refSub").textContent = `sweep ${price.n} · ${price.ref ? price.ref.time : ""}`;
+    if (price.limits) {
+      lo = parseFloat(price.limits[0]); hi = parseFloat(price.limits[1]);
+      $("limPx").textContent = `${price.limits[0]} — ${price.limits[1]}`;
+      $("limSub").textContent = "global: " + (price.global || "—");
+      if (ref && hl && hl.ok) {
+        const p = parseFloat(hl.px);
+        const pct = ((p - lo) / (hi - lo)) * 100;
+        $("limBar").style.width = Math.max(0, Math.min(100, pct)) + "%";
+        const dist = ((p - parseFloat(ref)) / parseFloat(ref)) * 100;
+        $("limSub").textContent = `قیمت زنده ${dist >= 0 ? "+" : ""}${dist.toFixed(2)}% نسبت به مرجع`;
+      }
+    }
+    const refDid = cache.price.from;
+    if (refDid) $("refDid").textContent = shortDid(refDid);
+  }
+
+  if (c) {
+    $("sweepN").textContent = c.sweep + " / " + c.lock_sweep;
+    $("nextSweep").textContent = "بعدی تا " + fmtDur(c.next_sweep_in_s);
+    $("lockIn").textContent = fmtDur(c.lock_in_s);
+    $("lockAt").textContent = c.locked ? "قفل شد" : "تا ۴ اکتبر ۰۹:۰۰ UTC";
+    if (!pxTouched && ref) { $("px").value = ref; pxTouched = true; updateFee(); }
+    if (!untilTouched) { $("until").value = c.default_until; untilTouched = true; validateTrade(); }
+  }
+  validateTrade();
+}
+
+function collectTrades() {
+  const byId = new Map();
+  for (const m of (cache.close1 && cache.close1.messages) || []) {
+    const o = parseObj(m);
+    if (!o || o.t !== "trade" || !o.terms || !o.terms.id) continue;
+    byId.set(o.terms.id, { msg: o, seq: m.seq, ts: m.ts, from: m.from });
+  }
+  const status = new Map();
+  for (const f of cache.flows) {
+    const o = parseObj(f);
+    if (!o || o.t !== "flow") continue;
+    for (const id of o.settled || []) status.set(id, ["settled", ""]);
+    for (const pair of o.void || []) if (Array.isArray(pair)) status.set(pair[0], ["void", pair[1]]);
+  }
+  return { byId, status };
+}
+
+function statusBadge(byId, status, id) {
+  const st = status.get(id);
+  const entry = byId.get(id);
+  if (st && st[0] === "settled") return '<span class="badge st">تسویه شد</span>';
+  if (st && st[0] === "void") return `<span class="badge vo">باطل: ${esc(st[1])}</span>`;
+  if (entry && entry.msg.taker_sig) return '<span class="badge pd">ثبت شد — در انتظار sweep</span>';
+  if (entry) return '<span class="badge op">باز (در انتظار قبول)</span>';
+  return '<span class="badge pd">نامشخص</span>';
+}
+
+function renderOffers() {
+  const { byId, status } = collectTrades();
+  const rows = [];
+  for (const [id, entry] of byId) {
+    if (entry.msg.taker_sig) continue;
+    if (status.has(id)) continue;
+    rows.push([id, entry]);
+  }
+  rows.sort((a, b) => b[1].seq - a[1].seq);
+  const box = $("offersBox");
+  if (!rows.length) { box.innerHTML = '<span class="muted">پیشنهاد بازی در ۱۰۰ پیام اخیر پیدا نشد.</span>'; return; }
+  let html = "<table><tr><th>id</th><th>طرف</th><th>تعداد</th><th>قیمت</th><th>تا sweep</th><th>سازنده</th><th></th></tr>";
+  for (const [id, entry] of rows) {
+    const t = entry.msg.terms;
+    const mine = t.maker === S.did;
+    html += `<tr>
+      <td class="num">${esc(id)}</td>
+      <td><span class="badge ${t.side === "buy" ? "buy" : "sell"}">${t.side === "buy" ? "خرید" : "فروش"}</span></td>
+      <td class="num">${esc(t.qty)}</td>
+      <td class="num">${esc(t.px)}</td>
+      <td class="num">${esc(t.until)}</td>
+      <td class="num" title="${esc(t.maker)}">${shortDid(t.maker)}${mine ? " (من)" : ""}</td>
+      <td>
+        <button class="ghost" data-act="accept" data-id="${esc(id)}">قبول</button>
+        <button class="ghost" data-act="copy" data-id="${esc(id)}">کپی</button>
+      </td>
+    </tr>`;
+  }
+  html += "</table>";
+  box.innerHTML = html;
+  box.querySelectorAll("button[data-act]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const entry = byId.get(btn.dataset.id);
+      if (!entry) return;
+      const text = JSON.stringify(entry.msg);
+      if (btn.dataset.act === "copy") { copyText(text); return; }
+      $("acceptIn").value = text;
+      inspectOffer();
+      document.querySelector('[data-tab="trade"]').click();
+      $("acceptIn").scrollIntoView({ behavior: "smooth" });
+    });
+  });
+}
+
+function renderTx() {
+  const { byId, status } = collectTrades();
+  const rows = [];
+  for (const [id, entry] of byId) {
+    const t = entry.msg.terms;
+    const role = t.maker === S.did ? "سازنده" : (entry.msg.taker === S.did ? "قبول‌کننده" : null);
+    const byFrom = entry.from === S.did ? "من (ارسال)" : null;
+    if (!role && !byFrom) continue;
+    rows.push([id, entry, role || byFrom]);
+  }
+  rows.sort((a, b) => b[1].seq - a[1].seq);
+  const box = $("txBox");
+  if (!S.did) { box.innerHTML = '<span class="muted">اول کلید بسازید.</span>'; return; }
+  if (!rows.length) { box.innerHTML = '<span class="muted">هنوز تریدی با کلید شما در اتاق close1 دیده نشده است.</span>'; }
+  else {
+    let html = `<table><tr><th>زمان</th><th>id</th><th>نقش</th><th>طرف</th><th>تعداد</th><th>قیمت</th><th>تا sweep</th><th>وضعیت</th></tr>`;
+    for (const [id, entry, role] of rows) {
+      const t = entry.msg.terms;
+      html += `<tr>
+        <td class="num">${esc(entry.ts.replace("T", " ").slice(0, 19))}</td>
+        <td class="num">${esc(id)}</td>
+        <td>${esc(role)}</td>
+        <td><span class="badge ${t.side === "buy" ? "buy" : "sell"}">${t.side === "buy" ? "خرید" : "فروش"}</span></td>
+        <td class="num">${esc(t.qty)}</td>
+        <td class="num">${esc(t.px)}</td>
+        <td class="num">${esc(t.until)}</td>
+        <td>${statusBadge(byId, status, id)}</td>
+      </tr>`;
+    }
+    html += "</table>";
+    box.innerHTML = html;
+  }
+  const logBox = $("logBox");
+  if (!S.log || !S.log.length) { logBox.innerHTML = '<span class="muted">عملیاتی ثبت نشده است.</span>'; }
+  else {
+    let html = "<table><tr><th>زمان</th><th>عملیات</th><th>جزئیات</th><th>کد</th></tr>";
+    for (const e of S.log) {
+      const d = Object.entries(e).filter(([k]) => !["ts", "kind", "text"].includes(k))
+        .map(([k, v]) => `${k}: ${v}`).join(" · ");
+      html += `<tr><td class="num">${new Date(e.ts * 1000).toISOString().slice(11, 19)}</td>
+        <td>${esc(e.kind)}</td><td class="num">${esc(d)}</td>
+        <td class="${e.code && e.code >= 200 && e.code < 300 ? "ok-txt" : "err"}">${e.code ?? "—"}</td></tr>`;
+    }
+    html += "</table>";
+    logBox.innerHTML = html;
+  }
+}
+
+function renderBoard() {
+  const price = cache.price ? parseObj(cache.price) : null;
+  const hl = cache.hl;
+  if (price && price.t === "price") {
+    $("bRef").textContent = price.ref ? price.ref.px : "—";
+    $("bRefSub").textContent = `زمان: ${price.ref ? price.ref.time : "—"} · tid: ${price.ref ? price.ref.tid : "—"} · age ${price.age_s ?? "?"} ثانیه`;
+    $("bGlobal").textContent = price.global || "—";
+    $("bGlobalSub").textContent = `سقف ±۵٪: ${price.limits ? price.limits[0] + " — " + price.limits[1] : "—"}`;
+    if (hl && hl.ok && price.ref) {
+      const d = ((parseFloat(hl.px) - parseFloat(price.ref.px)) / parseFloat(price.ref.px)) * 100;
+      $("bDist").textContent = (d >= 0 ? "+" : "") + d.toFixed(2) + "%";
+    }
+    $("bHl").textContent = hl && hl.ok ? hl.px : "—";
+    $("bHlSub").textContent = hl && hl.ok ? `O ${hl.open} · H ${hl.high} · L ${hl.low}` : "";
+  }
+
+  const pnl = cache.pnl ? parseObj(cache.pnl) : null;
+  if (pnl && pnl.t === "pnl") {
+    let my = null;
+    let html = "<table><tr><th>#</th><th>کلید</th><th>امتیاز</th></tr>";
+    (pnl.top || []).slice(0, 25).forEach((row, i) => {
+      if (S.did && row[0] === S.did) my = row[1];
+      html += `<tr><td class="num">${i + 1}</td><td class="num" title="${esc(row[0])}">${shortDid(row[0])}${S.did && row[0] === S.did ? " (من)" : ""}</td><td class="num">${esc(row[1])}</td></tr>`;
+    });
+    html += "</table>";
+    $("pnlBox").innerHTML = html;
+    $("myScore").innerHTML = my !== null
+      ? `امتیاز شما: <b class="num">${esc(my)}</b> (score = POLF نهایی − ۱۰,۰۰۰)`
+      : (S.did ? "امتیاز شما در ۲۵ برتر نیست (یا هنوز معامله‌ای ندارید)." : "");
+  }
+
+  const pos = cache.pos ? parseObj(cache.pos) : null;
+  if (pos && pos.t === "positions") {
+    let my = null;
+    let html = `<div class="muted num">open interest: ${esc(pos.open)} · longs: ${esc(pos.longs)} · shorts: ${esc(pos.shorts)}</div>`;
+    html += "<table><tr><th>#</th><th>کلید</th><th>پوزیشن خالص</th></tr>";
+    (pos.top || []).slice(0, 25).forEach((row, i) => {
+      if (S.did && row[0] === S.did) my = row[1];
+      html += `<tr><td class="num">${i + 1}</td><td class="num" title="${esc(row[0])}">${shortDid(row[0])}${S.did && row[0] === S.did ? " (من)" : ""}</td><td class="num">${esc(row[1])}</td></tr>`;
+    });
+    html += "</table>";
+    $("posBox").innerHTML = html;
+    $("myPos").innerHTML = my !== null
+      ? `پوزیشن شما: <b class="num">${esc(my)}</b> (مثبت = long، منفی = short)`
+      : (S.did ? "پوزیشن شما در ۲۵ برتر نیست." : "");
+  }
+
+  const st = cache.state ? parseObj(cache.state) : null;
+  if (st && st.t === "state") {
+    $("stateBox").innerHTML = `<span class="num">owners: ${esc(st.owners)} · rooms: ${esc(st.rooms)}</span><br>
+      <span class="muted num">root: ${esc(st.root)}</span>`;
+  }
+
+  const flow = cache.flows.length ? parseObj(cache.flows[cache.flows.length - 1]) : null;
+  if (flow && flow.t === "flow") {
+    const reasons = {};
+    for (const pair of flow.void || []) if (Array.isArray(pair)) reasons[pair[1]] = (reasons[pair[1]] || 0) + 1;
+    const rHtml = Object.entries(reasons).sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => `${esc(k)}: ${v}`).join(" · ") || "—";
+    $("flowBox").innerHTML = `<span class="num">sweep ${esc(flow.n)} — settled: ${(flow.settled || []).length} · void: ${(flow.void || []).length} · mints: ${(flow.mints || []).length} · rooms: ${(flow.rooms || []).length}</span><br>
+      <span class="muted">دلایل باطلی: ${rHtml}</span>`;
+  }
+}
+
+function renderSetup() {
+  const did = S.did;
+  if (did) {
+    $("keyBox").innerHTML = `<div class="num" style="font-size:16px; word-break:break-all">${esc(did)}</div>
+      <div class="row"><button class="ghost" id="btnCopyDid">کپی did:key</button></div>`;
+    $("btnCopyDid").addEventListener("click", () => copyText(did));
+    $("btnReveal").style.display = "";
+    setStatus("keyPill", "کلید: " + shortDid(did), "ok");
+  } else {
+    $("keyBox").innerHTML = "هنوز کلیدی ساخته نشده است. برای شرکت در مسابقه یک کلید Ed25519 لازم است — هویت دیگری بررسی نمی‌شود.";
+    $("btnReveal").style.display = "none";
+    setStatus("keyPill", "بدون کلید", "bad");
+  }
+
+  let registered = false;
+  for (const m of (cache.close1 && cache.close1.messages) || []) {
+    const o = parseObj(m);
+    if (m.from === did && o && o.t === "owner") { registered = true; break; }
+  }
+  let minted = false;
+  for (const f of cache.flows) {
+    const o = parseObj(f);
+    if (o && (o.mints || []).includes(did)) { minted = true; break; }
+  }
+  if (did) {
+    if (!registered && (S.log || []).some(e => e.kind === "register" && e.code >= 200 && e.code < 300)) registered = true;
+    if (registered) lsSet("cc_reg_" + did);
+    if (minted) lsSet("cc_mint_" + did);
+    registered = registered || lsGet("cc_reg_" + did);
+    minted = minted || lsGet("cc_mint_" + did);
+  }
+  if (!did) setStatus("regPill", "ثبت‌نام: —", "");
+  else if (minted) setStatus("regPill", "mint شد ✓ (۱۰,۰۰۰ POLF)", "ok");
+  else if (registered) setStatus("regPill", "ثبت‌نام ثبت شد — در انتظار sweep", "ok");
+  else setStatus("regPill", "ثبت‌نام نشده", "bad");
+}
+
+function updateFee() {
+  const qty = parseFloat($("qty").value), px = parseFloat($("px").value);
+  if (!isFinite(qty) || !isFinite(px) || qty <= 0 || px <= 0) { $("feePrev").textContent = "—"; return; }
+  const fee = (qty * px * 0.01).toFixed(4);
+  $("feePrev").textContent = `${fee} POLF (ارزش ${ (qty * px).toFixed(2) } × 1٪)`;
+}
+
+function validateTrade() {
+  const errs = [];
+  const c = S.contest;
+  const qty = $("qty").value.trim();
+  const px = $("px").value.trim();
+  const until = parseInt($("until").value, 10);
+  if (!S.did) errs.push("اول در تب راه‌اندازی کلید بسازید.");
+  if (c && c.locked) errs.push("مسابقه قفل شده است.");
+  if (!AMOUNT_RE.test(qty) || parseFloat(qty) < 0.1) errs.push("تعداد باید ≥ 0.1 و حداکثر دو رقم اعشار باشد.");
+  if (!AMOUNT_RE.test(px) || parseFloat(px) <= 0) errs.push("قیمت باید عدد معتبر (گام 0.01) باشد.");
+  const price = cache.price ? parseObj(cache.price) : null;
+  if (price && price.limits && AMOUNT_RE.test(px)) {
+    const p = parseFloat(px);
+    if (p < parseFloat(price.limits[0]) || p > parseFloat(price.limits[1]))
+      errs.push(`قیمت خارج از محدودهٔ مجاز ${price.limits[0]} — ${price.limits[1]} است → void می‌شود.`);
+  }
+  if (!Number.isInteger(until) || until < 1 || until > 2556) errs.push("until باید شمارهٔ sweep بین ۱ تا ۲۵۵۶ باشد.");
+  else if (c && until < c.sweep + 1) errs.push(`until باید حداقل ${c.sweep + 1} باشد تا در sweep بعدی تسویه شود (الان expired می‌شود).`);
+  if ($("takerMode").value === "named" && !DID_RE.test($("takerDid").value.trim()))
+    errs.push("did طرف مقابل معتبر نیست.");
+  $("tradeWarn").innerHTML = errs.map(e => "• " + esc(e)).join("<br>");
+  $("btnOffer").disabled = errs.length > 0;
+  return errs;
+}
+
+function renderAll() {
+  renderHeader();
+  renderSetup();
+  renderOffers();
+  renderTx();
+  renderBoard();
+}
+
+async function poll() {
+  if (polling) return;
+  polling = true;
+  try {
+    const [st, hl, price, flow, pnl, pos, stateMsg, c1] = await Promise.all([
+      api("/api/state"),
+      api("/api/hl"),
+      room("d-close1-price", 1),
+      room("d-close1-flow", 3),
+      room("d-close1-pnl", 1),
+      room("d-close1-positions", 1),
+      room("d-close1-state", 1),
+      room("close1", 100),
+    ]);
+    S = st;
+    cache.hl = hl;
+    cache.price = lastMsg(price);
+    cache.flows = flow.ok && flow.data ? (flow.data.messages || []) : [];
+    cache.pnl = lastMsg(pnl);
+    cache.pos = lastMsg(pos);
+    cache.state = lastMsg(stateMsg);
+    cache.close1 = c1.ok && c1.data ? c1.data : null;
+    lastPollOk = true;
+    setStatus("connPill", "اتصال: OK", "ok");
+    renderAll();
+    if (["rooms"].includes(currentTab())) refreshRooms();
+  } catch (err) {
+    lastPollOk = false;
+    setStatus("connPill", "اتصال: خطا", "bad");
+    toast("خطا در دریافت داده: " + err.message);
+  } finally {
+    polling = false;
+  }
+}
+
+function currentTab() {
+  return document.querySelector(".tabs button.active").dataset.tab;
+}
+
+async function refreshRooms() {
+  const name = $("roomSel").value;
+  try {
+    const data = await room(name, 20);
+    const box = $("roomBox");
+    if (!data.ok || !data.data || !data.data.messages) {
+      box.innerHTML = `<span class="err">خطا: ${esc(JSON.stringify(data.data).slice(0, 300))}</span>`;
+      return;
+    }
+    $("roomMeta").textContent = `${data.data.count} پیام · last_seq ${data.data.last_seq}`;
+    box.innerHTML = "";
+    for (const m of data.data.messages) {
+      const div = document.createElement("div");
+      div.className = "msg";
+      const who = m.from && m.from.startsWith("did:key") ? shortDid(m.from) : "~" + (m.from || "?");
+      div.innerHTML = `<div class="who num">${esc(who)} · seq ${m.seq} · ${esc(m.ts)}</div><div class="mono" style="word-break:break-all; font-size:12px">${esc(m.text)}</div>`;
+      box.appendChild(div);
+    }
+  } catch (err) {
+    toast("خطا: " + err.message);
+  }
+}
+
+async function inspectOffer() {
+  const out = $("inspectOut");
+  const text = $("acceptIn").value.trim();
+  if (!text) { out.innerHTML = '<span class="err">ابتدا پیشنهاد را وارد کنید.</span>'; $("btnAccept").disabled = true; return; }
+  try {
+    const res = await post("/api/inspect", { message: text });
+    if (!res.ok) throw new Error(res.error || "نامعتبر");
+    const t = res.terms;
+    out.innerHTML = `<div class="ok-txt">✓ امضای maker معتبر است</div>
+      <div class="grid2 muted">
+        <div>id: <span class="num">${esc(t.id)}</span></div>
+        <div>سازنده: <span class="num" title="${esc(t.maker)}">${esc(res.summary.maker_short)}</span></div>
+        <div>طرف: <b class="${t.side === "buy" ? "ok-txt" : "err"}">${t.side === "buy" ? "خرید" : "فروش"}</b></div>
+        <div>تعداد: <span class="num">${esc(t.qty)}</span> · قیمت: <span class="num">${esc(t.px)}</span></div>
+        <div>taker: <span class="num">${esc(t.taker)}</span></div>
+        <div>تا sweep: <span class="num">${esc(t.until)}</span></div>
+      </div>`;
+    $("btnAccept").disabled = false;
+    return res;
+  } catch (err) {
+    out.innerHTML = `<span class="err">✗ ${esc(err.message)}</span>`;
+    $("btnAccept").disabled = true;
+    return null;
+  }
+}
+
+$("btnInspect").addEventListener("click", inspectOffer);
+
+$("btnAccept").addEventListener("click", async () => {
+  const res = await inspectOffer();
+  if (!res) return;
+  if (!confirm("این معامله قبول شود و پیام countersign شده ارسال گردد؟")) return;
+  try {
+    const out = await post("/api/accept", { message: $("acceptIn").value.trim(), room: $("tradeRoom").value.trim() });
+    $("inspectOut").innerHTML = out.ok
+      ? `<div class="ok-txt">✓ ثبت شد (کد ${out.code})</div><pre>${esc(out.text)}</pre>`
+      : `<span class="err">✗ ${esc(out.error || ("کد " + out.code))}</span><pre>${esc((out.body || "").slice(0, 500))}</pre>`;
+    toast(out.ok ? "معامله ثبت شد — در sweep بعدی تسویه می‌شود" : "ارسال ناموفق");
+    poll();
+  } catch (err) { toast("خطا: " + err.message); }
+});
+
+$("btnNewKey").addEventListener("click", async () => {
+  if (S.did && !confirm("کلید فعلی جایگزین می‌شود. مطمئنید؟ (اگر کلید قبلی را ذخیره نکرده‌اید حساب مسابقه از دست می‌رود)")) return;
+  try {
+    const res = await post("/api/key/new", {});
+    if (!res.ok) throw new Error(res.error);
+    toast("کلید ساخته شد: " + res.did.slice(0, 20) + "…");
+    pxTouched = false;
+    poll();
+  } catch (err) { toast("خطا: " + err.message); }
+});
+
+$("btnImport").addEventListener("click", async () => {
+  try {
+    const res = await post("/api/key/import", { seed_hex: $("seedIn").value });
+    if (!res.ok) throw new Error(res.error);
+    toast("کلید وارد شد: " + res.did.slice(0, 20) + "…");
+    poll();
+  } catch (err) { toast("خطا: " + err.message); }
+});
+
+$("btnReveal").addEventListener("click", async () => {
+  try {
+    const res = await post("/api/key/export", {});
+    if (!res.ok) throw new Error(res.error);
+    const text = `did: ${res.did}\nseed: ${res.seed_hex}`;
+    await copyText(text);
+    alert("کلید شما:\n\n" + text + "\n\n(در کلیپ‌بورد کپی شد — فقط نگه دارید)");
+  } catch (err) { toast("خطا: " + err.message); }
+});
+
+$("btnRegister").addEventListener("click", async () => {
+  if (!confirm("پیام owner امضاشده ارسال شود؟")) return;
+  try {
+    const res = await post("/api/register", { room: $("regRoom").value.trim() || "close1" });
+    $("regOut").innerHTML = res.ok
+      ? `<div class="ok-txt">✓ ثبت‌نام ارسال شد (کد ${res.code}) — تا sweep بعدی ۱۰,۰۰۰ POLF می‌گیرید.</div><pre>${esc(res.text)}</pre>`
+      : `<span class="err">✗ ${esc(res.error || ("کد " + res.code))}</span><pre>${esc((res.body || "").slice(0, 500))}</pre>`;
+    poll();
+  } catch (err) { toast("خطا: " + err.message); }
+});
+
+$("btnRegRoom").addEventListener("click", async () => {
+  try {
+    const res = await post("/api/register-room", { room: $("ownRoom").value.trim(), post_room: $("regRoom").value.trim() || "close1" });
+    $("roomRegOut").innerHTML = res.ok
+      ? `<div class="ok-txt">✓ اتاق ثبت شد (کد ${res.code})</div>`
+      : `<span class="err">✗ ${esc(res.error || ("کد " + res.code))}</span><pre>${esc((res.body || "").slice(0, 500))}</pre>`;
+    poll();
+  } catch (err) { toast("خطا: " + err.message); }
+});
+
+function setSide(next) {
+  side = next;
+  $("btnBuy").classList.toggle("active", side === "buy");
+  $("btnSell").classList.toggle("active", side === "sell");
+}
+$("btnBuy").addEventListener("click", () => setSide("buy"));
+$("btnSell").addEventListener("click", () => setSide("sell"));
+
+$("takerMode").addEventListener("change", () => {
+  $("takerDid").style.display = $("takerMode").value === "named" ? "" : "none";
+  validateTrade();
+});
+["qty", "px", "until", "takerDid"].forEach(id => {
+  $(id).addEventListener("input", () => {
+    if (id === "px") pxTouched = true;
+    if (id === "until") untilTouched = true;
+    updateFee();
+    validateTrade();
+  });
+});
+
+$("btnOffer").addEventListener("click", async () => {
+  if (validateTrade().length) return;
+  const body = {
+    side,
+    qty: $("qty").value.trim(),
+    px: $("px").value.trim(),
+    until: parseInt($("until").value, 10),
+    taker: $("takerMode").value === "any" ? "any" : $("takerDid").value.trim(),
+    room: $("tradeRoom").value.trim() || "close1",
+  };
+  if (!confirm(`پیشنهاد ${side === "buy" ? "خرید" : "فروش"} ${body.qty} با قیمت ${body.px} ارسال شود؟`)) return;
+  try {
+    const res = await post("/api/offer", body);
+    const out = $("offerOut");
+    out.style.display = "block";
+    out.textContent = res.ok
+      ? `OK (کد ${res.code})\n\n${res.text}`
+      : `خطا: ${res.error || ""}\n${(res.body || "").slice(0, 600)}`;
+    toast(res.ok ? "پیشنهاد منتشر شد" : "ارسال ناموفق: " + (res.error || res.code));
+    poll();
+  } catch (err) { toast("خطا: " + err.message); }
+});
+
+$("btnFreePost").addEventListener("click", async () => {
+  try {
+    const res = await post("/api/post", { room: $("freeRoom").value.trim() || "close1", text: $("freeText").value });
+    $("freeOut").innerHTML = res.ok
+      ? `<div class="ok-txt">✓ ارسال شد (کد ${res.code})</div><pre>${esc(res.text)}</pre>`
+      : `<span class="err">✗ ${esc(res.error || ("کد " + res.code))}</span><pre>${esc((res.body || "").slice(0, 500))}</pre>`;
+    poll();
+  } catch (err) { toast("خطا: " + err.message); }
+});
+
+$("btnRoomRefresh").addEventListener("click", refreshRooms);
+$("roomSel").addEventListener("change", refreshRooms);
+
+function tick() {
+  const c = S.contest;
+  if (!c) return;
+  c.next_sweep_in_s = Math.max(0, c.next_sweep_in_s - 1);
+  c.lock_in_s = Math.max(0, c.lock_in_s - 1);
+  $("nextSweep").textContent = "بعدی تا " + fmtDur(c.next_sweep_in_s);
+  $("lockIn").textContent = fmtDur(c.lock_in_s);
+}
+
+poll();
+setInterval(poll, 20000);
+setInterval(tick, 1000);
+</script>
+</body>
+</html>

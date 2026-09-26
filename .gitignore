@@ -1,0 +1,8 @@
+state.json
+server.log
+server.err.log
+__pycache__/
+*.pyc
+*.pyo
+dist/
+.DS_Store
