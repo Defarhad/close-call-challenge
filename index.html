@@ -364,8 +364,19 @@
   </div>
 
   <div class="panel">
-    <h2>پیشنهادهای باز <span class="num" id="offersRoom">close1</span></h2>
-    <div class="muted">فقط پیشنهادهایی که هنوز کسی قبول نکرده و در ۳ sweep اخیر باطل نشده‌اند.</div>
+    <h2>اتاق‌های فعال <span class="muted" id="busyMeta"></span></h2>
+    <div class="muted">خودکار هر دقیقه تازه می‌شود — رتبه بر اساس فعالیت اخیر. «باز» یعنی پیشنهادهای قبول‌نشدهٔ همان اتاق. با «پیشنهادها» جدول پایین‌تر روی همان اتاق می‌افتد.</div>
+    <div id="busyBox" class="muted">در حال بارگذاری…</div>
+  </div>
+
+  <div class="panel">
+    <h2>پیشنهادهای باز — <span class="num" id="offersRoom">close1</span>
+      <span class="row" style="display:inline-flex; vertical-align:middle; margin:0 8px">
+        <button class="ghost" id="btnOffersRefresh" style="padding:3px 10px; font-size:13px">تازه‌سازی</button>
+        <button class="ghost" id="btnOffersHome" style="padding:3px 10px; font-size:13px; display:none">برگشت به close1</button>
+      </span>
+    </h2>
+    <div class="muted">فقط پیشنهادهایی که هنوز کسی قبول نکرده و در flow اخیر باطل نشده‌اند (۱۰۰ پیام آخر اتاق).</div>
     <div id="offersBox" class="muted">—</div>
   </div>
 
@@ -472,10 +483,12 @@ const AMOUNT_RE = /^\d{1,7}(\.\d{1,2})?$/;
 const DID_RE = /^did:key:z6Mk[1-9A-HJ-NP-Za-km-z]{44}$/;
 
 let S = { contest: null, did: null, log: [] };
-let cache = { hl: null, price: null, flows: [], pnl: null, pos: null, close1: null };
+let cache = { hl: null, price: null, flows: [], pnl: null, pos: null, close1: null, busy: null, offers: null };
 let side = "buy";
+let offersRoom = "close1";
 let pxTouched = false, untilTouched = false;
 let polling = false, lastPollOk = false;
+let busyLoading = false, offersLoading = false;
 
 function esc(text) {
   return String(text).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -536,6 +549,7 @@ document.querySelectorAll(".tabs button").forEach(btn => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     btn.classList.add("active");
     $("tab-" + btn.dataset.tab).classList.add("active");
+    if (btn.dataset.tab === "trade") refreshTradeTab();
   });
 });
 
@@ -617,30 +631,30 @@ function statusBadge(byId, status, id) {
 }
 
 function renderOffers() {
-  const { byId, status } = collectTrades();
-  const rows = [];
-  for (const [id, entry] of byId) {
-    if (entry.msg.taker_sig) continue;
-    if (status.has(id)) continue;
-    rows.push([id, entry]);
-  }
-  rows.sort((a, b) => b[1].seq - a[1].seq);
   const box = $("offersBox");
-  if (!rows.length) { box.innerHTML = '<span class="muted">پیشنهاد بازی در ۱۰۰ پیام اخیر پیدا نشد.</span>'; return; }
+  const off = cache.offers;
+  if (!off) { box.innerHTML = '<span class="muted">در حال بارگذاری…</span>'; return; }
+  const rows = off.offers || [];
+  $("offersRoom").textContent = off.room || offersRoom;
+  $("btnOffersHome").style.display = (off.room || offersRoom) === "close1" ? "none" : "";
+  if (!rows.length) {
+    box.innerHTML = `<span class="muted">پیشنهاد بازی در اتاق ${esc(off.room)} پیدا نشد.</span>`;
+    return;
+  }
   let html = "<table><tr><th>id</th><th>طرف</th><th>تعداد</th><th>قیمت</th><th>تا sweep</th><th>سازنده</th><th></th></tr>";
-  for (const [id, entry] of rows) {
-    const t = entry.msg.terms;
+  for (const entry of rows) {
+    const t = entry.terms || {};
     const mine = t.maker === S.did;
     html += `<tr>
-      <td class="num">${esc(id)}</td>
+      <td class="num">${esc(entry.id)}</td>
       <td><span class="badge ${t.side === "buy" ? "buy" : "sell"}">${t.side === "buy" ? "خرید" : "فروش"}</span></td>
       <td class="num">${esc(t.qty)}</td>
       <td class="num">${esc(t.px)}</td>
       <td class="num">${esc(t.until)}</td>
       <td class="num" title="${esc(t.maker)}">${shortDid(t.maker)}${mine ? " (من)" : ""}</td>
       <td>
-        <button class="ghost" data-act="accept" data-id="${esc(id)}">قبول</button>
-        <button class="ghost" data-act="copy" data-id="${esc(id)}">کپی</button>
+        <button class="ghost" data-act="accept" data-id="${esc(entry.id)}">قبول</button>
+        <button class="ghost" data-act="copy" data-id="${esc(entry.id)}">کپی</button>
       </td>
     </tr>`;
   }
@@ -648,11 +662,10 @@ function renderOffers() {
   box.innerHTML = html;
   box.querySelectorAll("button[data-act]").forEach(btn => {
     btn.addEventListener("click", () => {
-      const entry = byId.get(btn.dataset.id);
+      const entry = rows.find(r => r.id === btn.dataset.id);
       if (!entry) return;
-      const text = JSON.stringify(entry.msg);
-      if (btn.dataset.act === "copy") { copyText(text); return; }
-      $("acceptIn").value = text;
+      if (btn.dataset.act === "copy") { copyText(entry.text); return; }
+      $("acceptIn").value = entry.text;
       document.querySelector('[data-tab="trade"]').click();
       const det = $("acceptDetails");
       if (det) det.open = true;
@@ -660,6 +673,94 @@ function renderOffers() {
       $("acceptIn").scrollIntoView({ behavior: "smooth" });
     });
   });
+}
+
+function renderBusy() {
+  const box = $("busyBox");
+  const busy = cache.busy;
+  if (!busy) return;
+  const rows = busy.rooms || [];
+  const now = Date.now();
+  $("busyMeta").textContent = `${rows.length} اتاق · مجموع ${busy.total ?? "?"} اتاق در technocore`;
+  if (!rows.length) { box.innerHTML = '<span class="muted">اتاقی پیدا نشد.</span>'; return; }
+  let html = "<table><tr><th>اتاق</th><th>باز</th><th>سرعت (پیام/دقیقه)</th><th>آخرین فعالیت</th><th>نشان</th><th></th></tr>";
+  for (const r of rows) {
+    const idle = typeof r.idle === "number" ? r.idle : null;
+    const when = idle === null ? "—" : idle < 60 ? "الان" : idle < 3600 ? `${Math.round(idle / 60)} دقیقه پیش`
+      : idle < 86400 ? `${Math.round(idle / 3600)} ساعت پیش` : `${Math.round(idle / 86400)} روز پیش`;
+    const badges = [];
+    if (r.room === "close1") badges.push('<span class="badge st">رسمی</span>');
+    if (r.fresh) badges.push('<span class="badge pd">ثبت‌شده</span>');
+    if (r.unlisted) badges.push('<span class="badge vo">ثبت‌نشده</span>');
+    const n = r.offers_n;
+    const nCell = n === null || n === undefined ? '<span class="muted">…</span>'
+      : n > 0 ? `<b class="ok-txt num">${n}</b>` : '<span class="muted num">0</span>';
+    const rateCell = typeof r.rate === "number"
+      ? `<span class="num">${r.rate}</span>` : '<span class="muted">—</span>';
+    const active = r.room === offersRoom ? ' style="background:#101b2c"' : "";
+    html += `<tr${active}>
+      <td class="num" title="${esc(r.topic || "")}">${esc(r.room)}${r.desk ? ' <span class="muted">(میز)</span>' : ""}</td>
+      <td>${nCell}</td>
+      <td>${rateCell}</td>
+      <td>${when}</td>
+      <td>${badges.join(" ")}</td>
+      <td><button class="ghost" data-room="${esc(r.room)}">پیشنهادها</button></td>
+    </tr>`;
+  }
+  html += "</table>";
+  box.innerHTML = html;
+  box.querySelectorAll("button[data-room]").forEach(btn => {
+    btn.addEventListener("click", () => selectOffersRoom(btn.dataset.room));
+  });
+}
+
+async function loadBusy() {
+  if (busyLoading) return;
+  busyLoading = true;
+  try {
+    const res = await api("/api/rooms?counts=1");
+    if (res.ok) {
+      cache.busy = res;
+      renderBusy();
+    }
+  } catch (err) {
+    $("busyBox").innerHTML = `<span class="err">خطا در دریافت فهرست اتاق‌ها: ${esc(err.message)}</span>`;
+  } finally {
+    busyLoading = false;
+  }
+}
+
+async function loadOffers() {
+  if (offersLoading) return;
+  offersLoading = true;
+  try {
+    const res = await api("/api/offers?room=" + encodeURIComponent(offersRoom));
+    if (res.ok) {
+      cache.offers = res;
+      renderOffers();
+    } else {
+      $("offersBox").innerHTML = `<span class="err">خطا: ${esc(res.error || "نامشخص")}</span>`;
+    }
+  } catch (err) {
+    $("offersBox").innerHTML = `<span class="err">خطا: ${esc(err.message)}</span>`;
+  } finally {
+    offersLoading = false;
+  }
+}
+
+function selectOffersRoom(room) {
+  if (!room || room === offersRoom) { loadOffers(); return; }
+  offersRoom = room;
+  cache.offers = null;
+  $("offersRoom").textContent = room;
+  $("offersBox").innerHTML = "در حال بارگذاری…";
+  renderBusy();
+  loadOffers();
+}
+
+function refreshTradeTab() {
+  loadBusy();
+  loadOffers();
 }
 
 function renderTx() {
@@ -888,6 +989,7 @@ async function poll() {
     lastPollOk = true;
     setStatus("connPill", "اتصال: OK", "ok");
     renderAll();
+    if (currentTab() === "trade") { loadBusy(); loadOffers(); }
     if (["rooms"].includes(currentTab())) refreshRooms();
   } catch (err) {
     lastPollOk = false;
@@ -958,7 +1060,7 @@ $("btnAccept").addEventListener("click", async () => {
   if (!res) return;
   if (!confirm("این معامله قبول شود و پیام countersign شده ارسال گردد؟")) return;
   try {
-    const out = await post("/api/accept", { message: $("acceptIn").value.trim(), room: $("tradeRoom").value.trim() });
+    const out = await post("/api/accept", { message: $("acceptIn").value.trim(), room: offersRoom });
     $("inspectOut").innerHTML = out.ok
       ? `<div class="ok-txt">✓ ثبت شد (کد ${out.code})</div><pre>${esc(out.text)}</pre>`
       : `<span class="err">✗ ${esc(out.error || ("کد " + out.code))}</span><pre>${esc((out.body || "").slice(0, 500))}</pre>`;
@@ -1074,6 +1176,8 @@ $("btnFreePost").addEventListener("click", async () => {
 
 $("btnRoomRefresh").addEventListener("click", refreshRooms);
 $("roomSel").addEventListener("change", refreshRooms);
+$("btnOffersRefresh").addEventListener("click", loadOffers);
+$("btnOffersHome").addEventListener("click", () => selectOffersRoom("close1"));
 
 function tick() {
   const c = S.contest;
@@ -1087,6 +1191,7 @@ function tick() {
 poll();
 setInterval(poll, 20000);
 setInterval(tick, 1000);
+setInterval(() => { if (currentTab() === "trade") loadBusy(); }, 60000);
 </script>
 </body>
 </html>

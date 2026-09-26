@@ -61,6 +61,16 @@ _hl_lock = threading.Lock()
 _hl_cache: dict = {"t": 0.0, "data": None}
 _read_counter = 0
 
+_rooms_lock = threading.Lock()
+_rooms_cache: dict = {"t": 0.0, "data": None, "rates": {}}
+_seq_history: dict[str, tuple[int, float]] = {}
+_flow_lock = threading.Lock()
+_flow_cache: dict = {"t": 0.0, "settled": set(), "void": set(), "fresh": set(), "unlisted": set()}
+_offers_lock = threading.Lock()
+_offers_cache: dict[str, dict] = {}
+
+DESK_RE = re.compile(r"(desk|offer|close|c1|nvda|cc[-0-9]|tclk|flop|flip|trade|pit|book)", re.IGNORECASE)
+
 
 class ApiError(Exception):
     def __init__(self, message: str, code: int = 400):
@@ -308,6 +318,179 @@ def chat_write(room: str, text: str, state: dict) -> dict:
     return {"code": status, "body": body, "nonce": nonce, "did": did, "text": text, "sig": sig}
 
 
+def chat_rooms() -> dict:
+    with _rooms_lock:
+        if time.time() - _rooms_cache["t"] < 60 and _rooms_cache["data"] is not None:
+            return _rooms_cache["data"]
+    url = f"{CHAT}/rooms?format=json&limit=200"
+    try:
+        with urllib.request.urlopen(url, timeout=20) as resp:
+            data = json.loads(resp.read().decode("utf-8", "replace"))
+    except (urllib.error.URLError, TimeoutError, ValueError) as exc:
+        raise ApiError(f"فهرست اتاق‌ها در دسترس نیست: {exc}", 502) from exc
+    nowt = time.time()
+    rates: dict[str, float] = {}
+    seen: set = set()
+    for item in data.get("rooms", []) if isinstance(data, dict) else []:
+        name = item.get("room") if isinstance(item, dict) else None
+        seq = item.get("last_seq") if isinstance(item, dict) else None
+        if not isinstance(name, str) or not isinstance(seq, int):
+            continue
+        seen.add(name)
+        prev = _seq_history.get(name)
+        if prev and nowt - prev[1] >= 15:
+            delta = (seq - prev[0]) / ((nowt - prev[1]) / 60.0)
+            if delta >= 0:
+                rates[name] = round(min(delta, 10 ** 6), 2)
+        _seq_history[name] = (seq, nowt)
+    for old in [k for k in _seq_history if k not in seen]:
+        _seq_history.pop(old, None)
+    with _rooms_lock:
+        _rooms_cache["t"] = time.time()
+        _rooms_cache["data"] = data
+        _rooms_cache["rates"] = rates
+    return data
+
+
+def flow_snapshot(ttl: float = 45.0) -> dict:
+    with _flow_lock:
+        if time.time() - _flow_cache["t"] < ttl and _flow_cache["t"]:
+            return _flow_cache
+    settled: set = set()
+    void: set = set()
+    fresh: set = set()
+    unlisted: set = set()
+    code, data = chat_read(FLOW_ROOM, limit=10)
+    if code == 200 and isinstance(data, dict):
+        for msg in data.get("messages", []):
+            try:
+                obj = json.loads(msg.get("text", ""))
+            except (ValueError, TypeError):
+                continue
+            if obj.get("t") != "flow":
+                continue
+            settled.update(obj.get("settled") or [])
+            fresh.update(obj.get("rooms") or [])
+            for pair in obj.get("void") or []:
+                if isinstance(pair, list) and pair:
+                    void.add(pair[0])
+            for name in obj.get("unlisted") or []:
+                unlisted.add(name)
+    with _flow_lock:
+        _flow_cache.update({"t": time.time(), "settled": settled, "void": void,
+                            "fresh": fresh, "unlisted": unlisted})
+        return dict(_flow_cache)
+
+
+def room_open_offers(room: str) -> dict:
+    if not ROOM_RE.match(room):
+        raise ApiError("نام اتاق نامعتبر است")
+    with _offers_lock:
+        entry = _offers_cache.get(room)
+        if entry and time.time() - entry["t"] < 45:
+            return entry["data"]
+    code, data = chat_read(room, limit=100)
+    if code != 200 or not isinstance(data, dict):
+        raise ApiError(f"اتاق {room} خوانده نشد (کد {code})", 502)
+    flow = flow_snapshot()
+    offers = []
+    seen_trades = 0
+    for msg in data.get("messages", []):
+        try:
+            obj = json.loads(msg.get("text", ""))
+        except (ValueError, TypeError):
+            continue
+        if obj.get("t") != "trade" or not isinstance(obj.get("terms"), dict):
+            continue
+        seen_trades += 1
+        tid = obj["terms"].get("id")
+        if not tid or obj.get("taker_sig"):
+            continue
+        if tid in flow["settled"] or tid in flow["void"]:
+            continue
+        offers.append({
+            "id": tid,
+            "seq": msg.get("seq"),
+            "ts": msg.get("ts"),
+            "from": msg.get("from"),
+            "text": msg.get("text"),
+            "terms": obj["terms"],
+        })
+    offers.sort(key=lambda item: -(item.get("seq") or 0))
+    result = {
+        "ok": True,
+        "room": room,
+        "count": len(offers),
+        "seen_trades": seen_trades,
+        "offers": offers,
+        "fetched_at": now_utc().isoformat().replace("+00:00", "Z"),
+    }
+    with _offers_lock:
+        _offers_cache[room] = {"t": time.time(), "data": result}
+        if len(_offers_cache) > 40:
+            for old in sorted(_offers_cache, key=lambda k: _offers_cache[k]["t"])[:10]:
+                _offers_cache.pop(old, None)
+    return result
+
+
+def route_rooms(counts: bool = False) -> dict:
+    data = chat_rooms()
+    with _rooms_lock:
+        rates = dict(_rooms_cache.get("rates") or {})
+    flags = flow_snapshot()
+    rows = []
+    for item in data.get("rooms", []):
+        if not isinstance(item, dict):
+            continue
+        name = item.get("room")
+        if not isinstance(name, str):
+            continue
+        idle = item.get("idle_seconds")
+        rows.append({
+            "room": name,
+            "msgs": item.get("last_seq"),
+            "bytes": item.get("bytes"),
+            "idle": idle,
+            "window": item.get("window"),
+            "topic": item.get("topic"),
+            "rate": rates.get(name),
+            "fresh": name in flags["fresh"],
+            "unlisted": name in flags["unlisted"],
+            "desk": bool(DESK_RE.search(name)) and not name.startswith("mb-pair") and name != "lobby",
+            "offers_n": None,
+        })
+
+    def sort_key(r: dict):
+        rate = r.get("rate")
+        return (
+            -(rate if isinstance(rate, (int, float)) else -1),
+            r["idle"] if isinstance(r["idle"], int) else 10 ** 9,
+            -(r["window"] or 0),
+        )
+
+    contest_rows = sorted((r for r in rows if r["desk"]), key=sort_key)
+    other_rows = sorted((r for r in rows if not r["desk"]), key=sort_key)
+    ordered = contest_rows[:40] + other_rows[:20]
+    if counts:
+        candidates = [r for r in contest_rows if not isinstance(r["idle"], int) or r["idle"] < 21600]
+        if not any(r["room"] == DEFAULT_TRADE_ROOM for r in candidates[:8]):
+            main = next((r for r in contest_rows if r["room"] == DEFAULT_TRADE_ROOM), None)
+            if main is not None:
+                candidates = [main] + [r for r in candidates if r["room"] != DEFAULT_TRADE_ROOM]
+        for row in candidates[:8]:
+            try:
+                row["offers_n"] = room_open_offers(row["room"])["count"]
+            except ApiError:
+                row["offers_n"] = None
+    return {
+        "ok": True,
+        "rooms": ordered[:60],
+        "total": data.get("total"),
+        "counts": counts,
+        "fetched_at": now_utc().isoformat().replace("+00:00", "Z"),
+    }
+
+
 def hl_last() -> dict:
     with _hl_lock:
         if time.time() - _hl_cache["t"] < 5 and _hl_cache["data"] is not None:
@@ -483,6 +666,12 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(state_payload())
             elif path == "/api/hl":
                 self._json(hl_last())
+            elif path == "/api/rooms":
+                counts = query.get("counts", ["0"])[0] in ("1", "true", "yes")
+                self._json(route_rooms(counts))
+            elif path == "/api/offers":
+                room = query.get("room", [DEFAULT_TRADE_ROOM])[0] or DEFAULT_TRADE_ROOM
+                self._json(room_open_offers(room))
             elif path.startswith("/api/room/"):
                 room = urllib.parse.unquote(path[len("/api/room/"):])
                 since = query.get("since", [None])[0]
