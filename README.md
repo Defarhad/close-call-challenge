@@ -32,7 +32,7 @@
 
 ### همهٔ سیستم‌ها
 ```bash
-git clone https://github.com/farhad72020/closecall-desk.git
+git clone https://github.com/Defarhad/closecall-desk.git
 cd closecall-desk
 pip install -r requirements.txt
 python server.py --open        # بدون --open هم می‌شود، بعد دستی مرورگر را باز کن
