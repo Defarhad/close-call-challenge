@@ -32,8 +32,8 @@
 
 ### همهٔ سیستم‌ها
 ```bash
-git clone https://github.com/Defarhad/closecall-desk.git
-cd closecall-desk
+git clone https://github.com/Defarhad/close-call-challenge.git
+cd close-call-challenge
 pip install -r requirements.txt
 python server.py --open        # بدون --open هم می‌شود، بعد دستی مرورگر را باز کن
 ```
