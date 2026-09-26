@@ -396,18 +396,53 @@
 
 <section class="tab" id="tab-board">
   <div class="panel">
-    <h2>امتیاز من</h2>
+    <h2>حساب من</h2>
+    <div class="grid2">
+      <div class="card">
+        <label>بالانس (POLF)</label>
+        <div class="val num" id="balVal">—</div>
+        <div class="sub" id="balSub">—</div>
+      </div>
+      <div class="card">
+        <label>پوزیشن خالص من</label>
+        <div class="val num" id="myPosV">—</div>
+        <div class="sub" id="myPosSub">—</div>
+      </div>
+      <div class="card">
+        <label>درخواست‌های من (باز)</label>
+        <div class="val num" id="myOpenN">—</div>
+        <div class="sub">پیشنهادهای شما + پیشنهادهایی که برای کلید شما آمده</div>
+      </div>
+      <div class="card">
+        <label>تاییدشده‌ها</label>
+        <div class="val num" id="myConfN">—</div>
+        <div class="sub" id="myConfSub">—</div>
+      </div>
+    </div>
+    <div class="muted" id="acctNote" style="margin-top:8px"></div>
+  </div>
+
+  <div class="panel">
+    <h2>درخواست‌های من (در انتظار قبول)</h2>
+    <div class="muted">از ۱۰۰ پیام اخیر close1 ساخته می‌شود؛ پیشنهاد باز بدون امضای طرف مقابل تا until معتبر است.</div>
+    <div id="myOpenBox" class="muted">—</div>
+  </div>
+
+  <div class="panel">
+    <h2>تاییدشده‌ها</h2>
+    <div class="muted">تریدهایی که هر دو طرف امضا زده‌اند؛ وضعیت تسویه/باطل از flow اخیر داور.</div>
+    <div id="txBox" class="muted">—</div>
+  </div>
+
+  <div class="panel">
+    <h2>امتیاز من (۲۵ برتر داور)</h2>
     <div id="myScore" class="muted">—</div>
     <div id="pnlBox" class="muted">—</div>
   </div>
   <div class="panel">
-    <h2>پوزیشن من (معاملات باز)</h2>
+    <h2>پوزیشن‌ها (۱۰ برتر داور)</h2>
     <div id="myPos" class="muted">—</div>
     <div id="posBox" class="muted">—</div>
-  </div>
-  <div class="panel">
-    <h2>تراکنش‌های من</h2>
-    <div id="txBox" class="muted">—</div>
   </div>
   <div class="panel">
     <details>
@@ -763,24 +798,80 @@ function refreshTradeTab() {
   loadOffers();
 }
 
+function myMinted() {
+  if (!S.did) return false;
+  for (const f of cache.flows) {
+    const o = parseObj(f);
+    if (o && (o.mints || []).includes(S.did)) return true;
+  }
+  return lsGet("cc_mint_" + S.did);
+}
+
 function renderTx() {
   const { byId, status } = collectTrades();
-  const rows = [];
-  for (const [id, entry] of byId) {
-    const t = entry.msg.terms;
-    const role = t.maker === S.did ? "سازنده" : (entry.msg.taker === S.did ? "قبول‌کننده" : null);
-    const byFrom = entry.from === S.did ? "من (ارسال)" : null;
-    if (!role && !byFrom) continue;
-    rows.push([id, entry, role || byFrom]);
+  const did = S.did;
+  const conf = [], open = [];
+  if (did) {
+    for (const [id, entry] of byId) {
+      const t = entry.msg.terms;
+      const iAmMaker = t.maker === did;
+      const iAmTaker = entry.msg.taker === did;
+      if (!iAmMaker && !iAmTaker && entry.from !== did) continue;
+      if (entry.msg.taker_sig) conf.push([id, entry]);
+      else if (iAmMaker || iAmTaker) open.push([id, entry]);
+    }
   }
-  rows.sort((a, b) => b[1].seq - a[1].seq);
+  open.sort((a, b) => b[1].seq - a[1].seq);
+  conf.sort((a, b) => b[1].seq - a[1].seq);
+
+  const openBox = $("myOpenBox");
+  if (!did) openBox.innerHTML = '<span class="muted">اول در تب «شروع» کلید بسازید.</span>';
+  else if (!open.length) openBox.innerHTML = '<span class="muted">درخواست بازی ندارید (یا همه قبول/منقضی شده‌اند).</span>';
+  else {
+    let html = "<table><tr><th>زمان</th><th>id</th><th>طرف</th><th>تعداد</th><th>قیمت</th><th>تا sweep</th><th>وضعیت</th><th></th></tr>";
+    for (const [id, entry] of open) {
+      const t = entry.msg.terms;
+      const forMe = t.taker === did && t.maker !== did;
+      const expired = S.contest && typeof t.until === "number" && t.until < S.contest.sweep;
+      const badge = forMe ? '<span class="badge pd">برای شما</span>'
+        : expired ? '<span class="badge vo">منقضی</span>' : '<span class="badge op">باز</span>';
+      html += `<tr>
+        <td class="num">${esc(entry.ts.replace("T", " ").slice(0, 19))}</td>
+        <td class="num">${esc(id)}</td>
+        <td><span class="badge ${t.side === "buy" ? "buy" : "sell"}">${t.side === "buy" ? "خرید" : "فروش"}</span></td>
+        <td class="num">${esc(t.qty)}</td>
+        <td class="num">${esc(t.px)}</td>
+        <td class="num">${esc(t.until)}</td>
+        <td>${badge}</td>
+        <td>${forMe ? `<button class="ghost" data-open-act="accept" data-id="${esc(id)}">قبول</button> ` : ""}<button class="ghost" data-open-act="copy" data-id="${esc(id)}">کپی</button></td>
+      </tr>`;
+    }
+    html += "</table>";
+    openBox.innerHTML = html;
+    openBox.querySelectorAll("button[data-open-act]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const item = open.find(r => r[0] === btn.dataset.id);
+        if (!item) return;
+        const text = item[1].msg && item[1].text ? item[1].text : JSON.stringify(item[1].msg);
+        if (btn.dataset.openAct === "copy") { copyText(text); return; }
+        $("acceptIn").value = JSON.stringify(item[1].msg);
+        document.querySelector('[data-tab="trade"]').click();
+        const det = $("acceptDetails");
+        if (det) det.open = true;
+        inspectOffer();
+        $("acceptIn").scrollIntoView({ behavior: "smooth" });
+      });
+    });
+  }
+
   const box = $("txBox");
-  if (!S.did) { box.innerHTML = '<span class="muted">اول در تب «شروع» کلید بسازید.</span>'; return; }
-  if (!rows.length) { box.innerHTML = '<span class="muted">هنوز تریدی با کلید شما در اتاق close1 دیده نشده است.</span>'; }
+  if (!did) box.innerHTML = '<span class="muted">اول در تب «شروع» کلید بسازید.</span>';
+  else if (!conf.length) box.innerHTML = '<span class="muted">هنوز ترید تاییدشده‌ای با کلید شما دیده نشده است.</span>';
   else {
     let html = `<table><tr><th>زمان</th><th>id</th><th>نقش</th><th>طرف</th><th>تعداد</th><th>قیمت</th><th>تا sweep</th><th>وضعیت</th></tr>`;
-    for (const [id, entry, role] of rows) {
+    for (const [id, entry] of conf) {
       const t = entry.msg.terms;
+      const role = t.maker === did ? "سازنده" : (entry.msg.taker === did ? "قبول‌کننده" : "ارسال‌کننده");
       html += `<tr>
         <td class="num">${esc(entry.ts.replace("T", " ").slice(0, 19))}</td>
         <td class="num">${esc(id)}</td>
@@ -795,6 +886,9 @@ function renderTx() {
     html += "</table>";
     box.innerHTML = html;
   }
+
+  renderAccount(did, conf, open.length, status);
+
   const logBox = $("logBox");
   if (!S.log || !S.log.length) { logBox.innerHTML = '<span class="muted">عملیاتی ثبت نشده است.</span>'; }
   else {
@@ -809,6 +903,77 @@ function renderTx() {
     html += "</table>";
     logBox.innerHTML = html;
   }
+}
+
+function renderAccount(did, conf, openCount, status) {
+  $("myOpenN").textContent = did ? String(openCount) : "—";
+
+  let settled = 0, voided = 0, pending = 0;
+  for (const [id] of conf) {
+    const st = status.get(id);
+    if (!st) pending++;
+    else if (st[0] === "settled") settled++;
+    else voided++;
+  }
+  $("myConfN").textContent = did ? String(conf.length) : "—";
+  $("myConfSub").textContent = did
+    ? `تسویه: ${settled} · باطل: ${voided} · در انتظار sweep: ${pending}` : "—";
+
+  let cash = 0, pos = 0, fees = 0;
+  const chrono = [...conf].sort((a, b) => a[1].seq - b[1].seq);
+  for (const [, entry] of chrono) {
+    const t = entry.msg.terms;
+    const mySide = t.maker === did ? t.side : (t.side === "buy" ? "sell" : "buy");
+    const q = parseFloat(t.qty), p = parseFloat(t.px);
+    if (mySide === "buy") { cash -= q * p; pos += q; }
+    else { cash += q * p; pos -= q; }
+    fees += q * p * 0.01;
+  }
+
+  const posMsg = cache.pos ? parseObj(cache.pos) : null;
+  let judgePos = null;
+  if (posMsg && did) {
+    const row = (posMsg.top || []).find(r => r[0] === did);
+    if (row) judgePos = parseFloat(row[1]);
+  }
+  const shownPos = judgePos !== null && isFinite(judgePos) ? judgePos : pos;
+  $("myPosV").textContent = !did ? "—"
+    : (conf.length || judgePos !== null ? (shownPos > 0 ? "+" : "") + shownPos.toFixed(2) : "0.00");
+  $("myPosSub").textContent = !did ? "—"
+    : judgePos !== null ? `از جدول داور (sweep ${posMsg.n})`
+    : conf.length ? "محاسبهٔ محلی از تریدهای تاییدشدهٔ close1"
+    : "بدون ترید تاییدشده";
+
+  const pnlMsg = cache.pnl ? parseObj(cache.pnl) : null;
+  const scoreRow = pnlMsg && did ? (pnlMsg.top || []).find(r => r[0] === did) : null;
+  const score = scoreRow ? parseFloat(scoreRow[1]) : null;
+  const markRaw = (pnlMsg && pnlMsg.mark) ? parseFloat(pnlMsg.mark)
+    : (cache.hl && cache.hl.ok ? parseFloat(cache.hl.px) : NaN);
+  const mark = isFinite(markRaw) ? markRaw : null;
+  const minted = myMinted();
+  const localEst = 10000 + cash + (pos !== 0 && mark !== null ? pos * mark : 0) - fees;
+
+  if (!did) {
+    $("balVal").textContent = "—";
+    $("balSub").textContent = "اول در تب «شروع» کلید بسازید.";
+  } else if (!minted) {
+    $("balVal").textContent = "—";
+    $("balSub").textContent = "هنوز ۱۰,۰۰۰ POLF واریز نشده (ثبت‌نام + sweep بعدی).";
+  } else if (score !== null && isFinite(score)) {
+    $("balVal").textContent = (10000 + score).toFixed(2);
+    $("balSub").textContent = `از جدول داور (sweep ${pnlMsg.n}) · تخمین محلی ≈ ${localEst.toFixed(2)}`;
+  } else if (pos !== 0 && mark === null) {
+    $("balVal").textContent = "—";
+    $("balSub").textContent = "قیمت mark در دسترس نیست و پوزیشن باز دارید.";
+  } else {
+    $("balVal").textContent = localEst.toFixed(2);
+    $("balSub").textContent = `تخمین محلی: ۱۰,۰۰۰ + نقد (${cash.toFixed(2)}) + پوزیشن (${pos.toFixed(2)}×${mark !== null ? mark : "—"}) − کارمزد (${fees.toFixed(2)})`;
+  }
+
+  const notes = [];
+  if (did && score === null && minted) notes.push("امتیاز شما فقط اگر در ۲۵ برتر جدول داور باشد منتشر می‌شود؛ بالانس بدون آن به‌صورت محلی تخمین زده می‌شود.");
+  notes.push("محاسبات از ۱۰۰ پیام اخیر close1 است؛ تریدهای قدیمی‌تر یا در اتاق‌های دیگر لحاظ نمی‌شوند.");
+  $("acctNote").textContent = notes.join(" ");
 }
 
 function renderBoard() {
