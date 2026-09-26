@@ -27,13 +27,13 @@
     line-height: 1.6;
   }
   header {
-    padding: 14px 18px 0;
+    padding: 12px 16px 0;
     border-bottom: 1px solid var(--line);
     background: linear-gradient(180deg, #101623, #0b0e14);
   }
-  .top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-  .brand { font-size: 20px; font-weight: 700; }
-  .brand span { color: var(--accent); font-size: 14px; font-weight: 400; }
+  .top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .brand { font-size: 18px; font-weight: 700; }
+  .brand span { color: var(--accent); font-size: 13px; font-weight: 400; }
   .pill {
     background: var(--panel2);
     border: 1px solid var(--line);
@@ -44,7 +44,7 @@
   }
   .pill.ok { color: var(--green); border-color: #1d5c3a; }
   .pill.bad { color: var(--red); border-color: #5c2323; }
-  .hud { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 12px 0; }
+  .hud { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 10px 0; }
   .card {
     background: var(--panel);
     border: 1px solid var(--line);
@@ -61,7 +61,7 @@
     border: 1px solid transparent;
     border-bottom: none;
     color: var(--muted);
-    padding: 9px 16px;
+    padding: 9px 18px;
     font-size: 15px;
     font-family: inherit;
     cursor: pointer;
@@ -72,7 +72,7 @@
     border-color: var(--line);
     color: var(--text);
   }
-  main { padding: 16px 18px 60px; max-width: 1200px; margin: 0 auto; }
+  main { padding: 16px 16px 60px; max-width: 980px; margin: 0 auto; }
   .tab { display: none; }
   .tab.active { display: block; }
   .panel {
@@ -123,7 +123,7 @@
     cursor: pointer;
   }
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
-  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
   .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
   .sides { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
   button.side { font-size: 19px; padding: 16px; opacity: .55; }
@@ -163,37 +163,74 @@
     z-index: 50;
     font-size: 14px;
   }
-  .kbd { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; font-size: 13px; }
   details summary { cursor: pointer; color: var(--accent); }
   .msg-list .msg { border-bottom: 1px solid var(--line); padding: 6px 0; }
   .msg .who { color: var(--accent); font-size: 12px; }
   .bar { height: 6px; background: var(--panel2); border-radius: 4px; overflow: hidden; margin-top: 6px; }
   .bar > div { height: 100%; background: var(--accent); width: 0; }
+
+  ol.steps { list-style: none; margin: 0; padding: 0; }
+  ol.steps li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 4px;
+    border-bottom: 1px dashed var(--line);
+    color: var(--muted);
+  }
+  ol.steps li:last-child { border-bottom: none; }
+  ol.steps li .dot {
+    width: 26px;
+    height: 26px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  ol.steps li em { font-style: normal; font-size: 12px; opacity: .8; }
+  ol.steps li.done { color: var(--text); }
+  ol.steps li.done .dot { background: var(--green); border-color: var(--green); color: #06121f; }
+  ol.steps li.done .dot::after { content: "✓"; }
+  ol.steps li.done .dot { font-size: 0; }
+  ol.steps li.done .dot::after { font-size: 13px; }
+  .tip {
+    background: #101b2c;
+    border: 1px solid #1d2f4a;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #a9c6e8;
+    font-size: 13px;
+    margin: 10px 0;
+  }
+  .adv { border-top: 1px dashed var(--line); margin-top: 12px; padding-top: 10px; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="top">
-    <div class="brand">Close Call — میز معاملات دستی <span>close-1 · NVDA</span></div>
+    <div class="brand">Close Call — میز معاملات <span>close-1 · NVDA</span></div>
     <span class="pill" id="keyPill">بدون کلید</span>
     <span class="pill" id="regPill">ثبت‌نام: نامشخص</span>
     <span class="pill" id="connPill">اتصال: —</span>
   </div>
   <div class="hud">
     <div class="card">
-      <label>قیمت زنده NVDA (Hyperliquid)</label>
+      <label>قیمت زنده NVDA</label>
       <div class="val num" id="hlPx">—</div>
       <div class="sub num" id="hlSub"></div>
     </div>
     <div class="card">
-      <label>مرجع داور (بستهٔ sweep قبل)</label>
+      <label>مرجع داور — محدودهٔ مجاز (±۵٪)</label>
       <div class="val num" id="refPx">—</div>
       <div class="sub num" id="refSub"></div>
-    </div>
-    <div class="card">
-      <label>محدودهٔ مجاز معامله (±۵٪)</label>
-      <div class="val num" id="limPx">—</div>
+      <div class="sub num" id="limPx">—</div>
       <div class="sub num" id="limSub"></div>
       <div class="bar"><div id="limBar"></div></div>
     </div>
@@ -201,19 +238,14 @@
       <label>sweep فعلی / بعدی</label>
       <div class="val num" id="sweepN">—</div>
       <div class="sub num" id="nextSweep"></div>
-    </div>
-    <div class="card">
-      <label>تا قفل‌شدن معاملات (lock)</label>
-      <div class="val num" id="lockIn">—</div>
-      <div class="sub num" id="lockAt"></div>
+      <div class="sub"><span class="num" id="lockIn">—</span> <span id="lockAt"></span></div>
     </div>
   </div>
   <nav class="tabs">
-    <button data-tab="setup" class="active">راه‌اندازی</button>
-    <button data-tab="trade">معامله (خرید/فروش)</button>
-    <button data-tab="board">تابلو و قیمت</button>
-    <button data-tab="tx">تراکنش‌ها</button>
-    <button data-tab="rooms">اتاق‌ها (خام)</button>
+    <button data-tab="setup" class="active">شروع</button>
+    <button data-tab="trade">معامله</button>
+    <button data-tab="board">نتایج من</button>
+    <button data-tab="rooms">پیشرفته</button>
   </nav>
 </header>
 
@@ -221,63 +253,67 @@
 
 <section class="tab active" id="tab-setup">
   <div class="panel">
-    <h2>۱) کلید بازیکن (<code>did:key</code>)</h2>
-    <div id="keyBox" class="muted">هنوز کلیدی ساخته نشده است. برای شرکت در مسابقه یک کلید Ed25519 لازم است — هویت دیگری بررسی نمی‌شود.</div>
+    <h2>۳ قدم تا شروع</h2>
+    <ol class="steps">
+      <li id="step1"><span class="dot">1</span> کلید بازیکن بسازید <em>— هویت شما در مسابقه است</em></li>
+      <li id="step2"><span class="dot">2</span> ثبت‌نام کنید و ۱۰,۰۰۰ POLF بگیرید</li>
+      <li id="step3"><span class="dot">3</span> اولین پیشنهاد خرید/فروش را منتشر کنید</li>
+    </ol>
+    <p class="muted" style="margin-bottom:0">به ترتیب همین سه قدم را انجام دهید؛ بعد هر وقت خواستید از تب «معامله» معامله کنید.</p>
+  </div>
+
+  <div class="panel">
+    <h2>قدم ۱ — کلید بازیکن</h2>
+    <div id="keyBox" class="muted">هنوز کلیدی ساخته نشده است. برای شرکت در مسابقه یک کلید لازم است — هویت دیگری بررسی نمی‌شود.</div>
     <div class="row">
       <button class="action" id="btnNewKey">ساخت کلید جدید</button>
       <button class="ghost" id="btnReveal" style="display:none">نمایش / کپی کلید خصوصی</button>
     </div>
     <details>
-      <summary>ورود کلید موجود (seed)</summary>
+      <summary>ورود کلید موجود (برای ادامهٔ کار روی کامپیوتر دیگر)</summary>
       <div class="row" style="margin-top:8px">
         <textarea id="seedIn" class="mono" placeholder="seed hex: 64 کاراکتر" style="max-width:480px"></textarea>
         <button class="ghost" id="btnImport">ورود کلید</button>
       </div>
     </details>
-    <p class="warn">کلید خصوصی فقط در همین کامپیوتر (فایل state.json) نگه داشته می‌شود؛ آن را آنلاین آپلود یا جایی کپی نکن. کلید، حساب مسابقهٔ شماست.</p>
+    <p class="warn">کلید فقط در همین کامپیوتر (فایل state.json) نگه داشته می‌شود؛ آن را جایی کپی یا آپلود نکنید — کلید یعنی حساب مسابقهٔ شما.</p>
   </div>
 
   <div class="panel">
-    <h2>۲) ثبت‌نام و دریافت ۱۰,۰۰۰ POLF</h2>
-    <p class="muted">پیام <code>{"t":"owner",…}</code> امضاشده با کلید شما در اتاق ارسال می‌شود؛ در sweep بعدی ۱۰,۰۰۰ POLF به حساب شما می‌ریزد (فقط یک‌بار، تا پیش از lock).</p>
+    <h2>قدم ۲ — ثبت‌نام و دریافت ۱۰,۰۰۰ POLF</h2>
+    <p class="muted">فقط یک بار بزنید؛ تا sweep بعدی (حداکثر ۵ دقیقه) ۱۰,۰۰۰ POLF به حساب شما می‌ریزد.</p>
+    <input type="hidden" id="regRoom" value="close1">
     <div class="row">
-      <div class="field" style="max-width:260px">
-        <label>اتاق مقصد</label>
-        <input id="regRoom" class="num-in" value="close1">
-      </div>
-      <button class="action" id="btnRegister">ثبت‌نام owner</button>
+      <button class="action" id="btnRegister">ثبت‌نام و دریافت POLF</button>
     </div>
     <div id="regOut"></div>
-    <details style="margin-top:8px">
-      <summary>ثبت اتاق اختصاصی معامله (اختیاری)</summary>
-      <div class="row" style="margin-top:8px">
-        <div class="field" style="max-width:260px">
-          <label>نام اتاق شما</label>
-          <input id="ownRoom" class="num-in" placeholder="my-nvda-desk">
-        </div>
-        <button class="ghost" id="btnRegRoom">ثبت اتاق</button>
-      </div>
-      <div class="muted">اتاق از sweep ای که در فهرست d-close1-flow ثبت شد، برای داور حساب می‌شود.</div>
-    </details>
-    <div id="roomRegOut"></div>
   </div>
 
   <div class="panel">
-    <h2>۳) قوانین خلاصه</h2>
+    <h2>قانون‌های مهم</h2>
     <div class="grid2 muted">
-      <div>• قرارداد: آیندهٔ NVDA، ۱ POLF به ازای هر دلار<br>• حداقل تعداد <span class="num">0.1</span>، گام قیمت/تعداد <span class="num">0.01</span></div>
-      <div>• هر طرف کارمزد <span class="num">1٪</span>؛ اگر بهتر از قیمت بستهٔ sweep معامله کردی، ما به التفاوت پس گرفته می‌شود (clawback)</div>
-      <div>• بدون اهرم؛ هر قرارداد باز، قیمتش را بلوکه می‌کند<br>• قیمت باید داخل ±۵٪ مرجع باشد وگرنه void</div>
-      <div>• sweep هر ۵ دقیقه؛ lock: ۴ اکتبر ۰۹:۰۰ UTC؛ قیمت نهایی S: آخرین ترید قبل از ۱۰:۰۰ UTC</div>
-      <div>• جایزه: سه نفر برتر ۱,۰۰۰,۰۰۰ FLOP بعد از mainnet (ادعا تا ۹۰ روز با همین کلید)</div>
-      <div>• داور: <code id="refDid">—</code></div>
+      <div>• قیمت معامله باید داخل ±۵٪ مرجع باشد، وگرنه باطل (void) می‌شود</div>
+      <div>• حداقل تعداد <span class="num">0.1</span> — هر طرف <span class="num">1٪</span> کارمزد</div>
+      <div>• sweep هر ۵ دقیقه تسویه می‌کند؛ قفل معاملات: ۴ اکتبر ۰۹:۰۰ UTC</div>
+      <div>• جایزه: سه نفر برتر ۱,۰۰۰,۰۰۰ FLOP</div>
     </div>
+    <details>
+      <summary>جزئیات کامل قوانین</summary>
+      <div class="grid2 muted" style="margin-top:8px">
+        <div>• قرارداد: آیندهٔ NVDA، ۱ POLF به ازای هر دلار؛ گام قیمت/تعداد <span class="num">0.01</span></div>
+        <div>• بدون اهرم؛ هر قرارداد باز، قیمتش را بلوکه می‌کند</div>
+        <div>• اگر بهتر از قیمت بستهٔ sweep معامله کردید، ما به التفاوت پس گرفته می‌شود (clawback)</div>
+        <div>• قیمت نهایی S: آخرین ترید قبل از ۴ اکتبر ۱۰:۰۰ UTC</div>
+        <div>• ادعای جایزه تا ۹۰ روز بعد از mainnet با همین کلید</div>
+        <div>• داور: <code id="refDid">—</code></div>
+      </div>
+    </details>
   </div>
 </section>
 
 <section class="tab" id="tab-trade">
   <div class="panel">
-    <h2>ثبت دستی معامله (Maker — انتشار پیشنهاد)</h2>
+    <h2>ثبت معامله (شما سازندهٔ پیشنهاد هستید)</h2>
     <div class="sides">
       <button class="side buy active" id="btnBuy">خرید (buy)</button>
       <button class="side sell" id="btnSell">فروش (sell)</button>
@@ -288,55 +324,100 @@
         <input id="qty" class="num-in" value="1">
       </div>
       <div class="field">
-        <label>قیمت (px) — POLF per dollar</label>
+        <label>قیمت (px) — خودکار از مرجع پر می‌شود</label>
         <input id="px" class="num-in" placeholder="—">
       </div>
       <div class="field">
-        <label>طرف مقابل</label>
-        <select id="takerMode">
-          <option value="any">هرکسی (any) — هرکسی می‌تواند قبول کند</option>
-          <option value="named">کلید مشخص</option>
-        </select>
-        <input id="takerDid" class="num-in" placeholder="did:key:z6Mk…" style="display:none; margin-top:6px">
-      </div>
-      <div class="field">
-        <label>تا کدام sweep معتبر باشد (until)</label>
-        <input id="until" class="num-in">
-      </div>
-      <div class="field">
-        <label>اتاق مقصد</label>
-        <input id="tradeRoom" class="num-in" value="close1">
-      </div>
-      <div class="field">
-        <label>پیش‌نمایش کارمزد هر طرف</label>
+        <label>کارمزد هر طرف (پیش‌نمایش)</label>
         <div id="feePrev" class="muted num">—</div>
       </div>
     </div>
+    <div class="tip">قیمت را دست نزنید؛ همان مرجع داور درست است. فقط «تعداد» را عوض کنید و دکمهٔ انتشار را بزنید. قیمت باید داخل ±۵٪ باشد تا باطل نشود.</div>
+
+    <details class="adv">
+      <summary>گزینه‌های پیشرفته (طرف مقابل، تاریخ انقضا، اتاق)</summary>
+      <div class="grid2" style="margin-top:10px">
+        <div class="field">
+          <label>طرف مقابل</label>
+          <select id="takerMode">
+            <option value="any">هرکسی (any) — هرکسی می‌تواند قبول کند</option>
+            <option value="named">کلید مشخص</option>
+          </select>
+          <input id="takerDid" class="num-in" placeholder="did:key:z6Mk…" style="display:none; margin-top:6px">
+        </div>
+        <div class="field">
+          <label>تا کدام sweep معتبر باشد (until)</label>
+          <input id="until" class="num-in">
+        </div>
+        <div class="field">
+          <label>اتاق مقصد</label>
+          <input id="tradeRoom" class="num-in" value="close1">
+        </div>
+      </div>
+    </details>
+
     <div id="tradeWarn" class="err" style="margin:10px 0"></div>
     <div class="row">
-      <button class="action" id="btnOffer">انتشار پیشنهاد (امضا و ارسال)</button>
-      <span class="muted">پیام <code>t:trade</code> با امضای maker و taker=any در اتاق منتشر می‌شود.</span>
+      <button class="action" id="btnOffer">انتشار پیشنهاد</button>
     </div>
     <pre id="offerOut" style="display:none"></pre>
   </div>
 
   <div class="panel">
-    <h2>پیشنهادهای باز اتاق <span class="num" id="offersRoom">close1</span></h2>
-    <div class="muted">فقط ۳ sweep اخیر flow بررسی می‌شود؛ پیشنهادهای قدیمی‌تر ممکن است قبلاً تسویه شده باشند.</div>
+    <h2>پیشنهادهای باز <span class="num" id="offersRoom">close1</span></h2>
+    <div class="muted">فقط پیشنهادهایی که هنوز کسی قبول نکرده و در ۳ sweep اخیر باطل نشده‌اند.</div>
     <div id="offersBox" class="muted">—</div>
   </div>
 
   <div class="panel">
-    <h2>قبول پیشنهاد (Taker)</h2>
-    <p class="muted">JSON پیشنهاد (پیام <code>t:trade</code> بدون taker_sig) را اینجا بچسبانید یا از جدول بالا دکمهٔ «قبول» را بزنید. امضای maker ابتدا بررسی می‌شود، بعد شما countersign می‌کنید.</p>
-    <textarea id="acceptIn" class="mono" placeholder='{"t":"trade","season":"close-1","terms":{…},"taker":"any","maker_sig":"…"}'></textarea>
-    <div class="row">
-      <button class="ghost" id="btnInspect">بررسی پیشنهاد</button>
-      <button class="action" id="btnAccept" disabled>قبول نهایی و ثبت معامله</button>
-    </div>
-    <div id="inspectOut"></div>
+    <details id="acceptDetails">
+      <summary>قبول پیشنهاد دیگران (JSON)</summary>
+      <p class="muted">از جدول بالا دکمهٔ «قبول» را بزنید تا پیشنهاد اینجا بیاید؛ یا JSON پیشنهاد را دستی بچسبانید. امضای سازنده اول بررسی می‌شود، بعد شما قبول می‌کنید.</p>
+      <textarea id="acceptIn" class="mono" placeholder='{"t":"trade","season":"close-1","terms":{…},"taker":"any","maker_sig":"…"}'></textarea>
+      <div class="row">
+        <button class="ghost" id="btnInspect">بررسی پیشنهاد</button>
+        <button class="action" id="btnAccept" disabled>قبول نهایی و ثبت معامله</button>
+      </div>
+      <div id="inspectOut"></div>
+    </details>
   </div>
+</section>
 
+<section class="tab" id="tab-board">
+  <div class="panel">
+    <h2>امتیاز من</h2>
+    <div id="myScore" class="muted">—</div>
+    <div id="pnlBox" class="muted">—</div>
+  </div>
+  <div class="panel">
+    <h2>پوزیشن من (معاملات باز)</h2>
+    <div id="myPos" class="muted">—</div>
+    <div id="posBox" class="muted">—</div>
+  </div>
+  <div class="panel">
+    <h2>تراکنش‌های من</h2>
+    <div id="txBox" class="muted">—</div>
+  </div>
+  <div class="panel">
+    <details>
+      <summary>جزئیات فنی (قیمت‌ها، وضعیت دفتر، flow داور، گزارش محلی)</summary>
+      <div class="grid2" style="margin-top:10px">
+        <div class="card"><label>مرجع + زمان آن</label><div class="val num" id="bRef">—</div><div class="sub num" id="bRefSub"></div></div>
+        <div class="card"><label>قیمت جهانی (global)</label><div class="val num" id="bGlobal">—</div><div class="sub" id="bGlobalSub"></div></div>
+        <div class="card"><label>قیمت زندهٔ آخرین کندل</label><div class="val num" id="bHl">—</div><div class="sub num" id="bHlSub"></div></div>
+        <div class="card"><label>فاصلهٔ قیمت زنده تا مرجع</label><div class="val num" id="bDist">—</div><div class="sub">خارج از ±۵٪ = void برای معاملات بعدی</div></div>
+      </div>
+      <h3>وضعیت دفتر (state)</h3>
+      <div id="stateBox" class="muted">—</div>
+      <h3>آخرین flow داور</h3>
+      <div id="flowBox" class="muted">—</div>
+      <h3>گزارش‌های محلی (عملیات انجام‌شده از این صفحه)</h3>
+      <div id="logBox" class="muted">—</div>
+    </details>
+  </div>
+</section>
+
+<section class="tab" id="tab-rooms">
   <div class="panel">
     <h2>پیام امضاشدهٔ آزاد (مذاکره / انتشار دستی)</h2>
     <div class="row">
@@ -349,51 +430,20 @@
     </div>
     <div id="freeOut"></div>
   </div>
-</section>
 
-<section class="tab" id="tab-board">
   <div class="panel">
-    <h2>قیمت و sweep</h2>
-    <div class="grid2">
-      <div class="card"><label>مرجع (ref) + زمان آن</label><div class="val num" id="bRef">—</div><div class="sub num" id="bRefSub"></div></div>
-      <div class="card"><label>قیمت جهانی معاملات (global)</label><div class="val num" id="bGlobal">—</div><div class="sub" id="bGlobalSub"></div></div>
-      <div class="card"><label>قیمت زندهٔ آخرین کندل ۱ دقیقه‌ای</label><div class="val num" id="bHl">—</div><div class="sub num" id="bHlSub"></div></div>
-      <div class="card"><label>فاصلهٔ قیمت زنده تا مرجع</label><div class="val num" id="bDist">—</div><div class="sub">خارج از ±۵٪ = void برای معاملات بعدی</div></div>
+    <h2>ثبت اتاق اختصاصی معامله (اختیاری)</h2>
+    <div class="row">
+      <div class="field" style="max-width:260px">
+        <label>نام اتاق شما</label>
+        <input id="ownRoom" class="num-in" placeholder="my-nvda-desk">
+      </div>
+      <button class="ghost" id="btnRegRoom">ثبت اتاق</button>
     </div>
+    <div class="muted">اتاق از sweep ای که در فهرست d-close1-flow ثبت شد، برای داور حساب می‌شود.</div>
+    <div id="roomRegOut"></div>
   </div>
-  <div class="panel">
-    <h2>جدول امتیازات (pnl) — ۲۵ برتر</h2>
-    <div id="myScore" class="muted">—</div>
-    <div id="pnlBox" class="muted">—</div>
-  </div>
-  <div class="panel">
-    <h2>پوزیشن‌های باز (positions)</h2>
-    <div id="myPos" class="muted">—</div>
-    <div id="posBox" class="muted">—</div>
-  </div>
-  <div class="panel">
-    <h2>وضعیت دفتر (state)</h2>
-    <div id="stateBox" class="muted">—</div>
-  </div>
-  <div class="panel">
-    <h2>آخرین flow داور</h2>
-    <div id="flowBox" class="muted">—</div>
-  </div>
-</section>
 
-<section class="tab" id="tab-tx">
-  <div class="panel">
-    <h2>تراکنش‌های من</h2>
-    <div class="muted">از ۱۰۰ پیام آخر اتاق close1 + ۳ sweep اخیر flow ساخته می‌شود.</div>
-    <div id="txBox" class="muted">—</div>
-  </div>
-  <div class="panel">
-    <h2>گزارش‌های محلی (عملیات انجام‌شده از این صفحه)</h2>
-    <div id="logBox" class="muted">—</div>
-  </div>
-</section>
-
-<section class="tab" id="tab-rooms">
   <div class="panel">
     <h2>مشاهدهٔ خام اتاق‌ها</h2>
     <div class="row">
@@ -603,8 +653,10 @@ function renderOffers() {
       const text = JSON.stringify(entry.msg);
       if (btn.dataset.act === "copy") { copyText(text); return; }
       $("acceptIn").value = text;
-      inspectOffer();
       document.querySelector('[data-tab="trade"]').click();
+      const det = $("acceptDetails");
+      if (det) det.open = true;
+      inspectOffer();
       $("acceptIn").scrollIntoView({ behavior: "smooth" });
     });
   });
@@ -622,7 +674,7 @@ function renderTx() {
   }
   rows.sort((a, b) => b[1].seq - a[1].seq);
   const box = $("txBox");
-  if (!S.did) { box.innerHTML = '<span class="muted">اول کلید بسازید.</span>'; return; }
+  if (!S.did) { box.innerHTML = '<span class="muted">اول در تب «شروع» کلید بسازید.</span>'; return; }
   if (!rows.length) { box.innerHTML = '<span class="muted">هنوز تریدی با کلید شما در اتاق close1 دیده نشده است.</span>'; }
   else {
     let html = `<table><tr><th>زمان</th><th>id</th><th>نقش</th><th>طرف</th><th>تعداد</th><th>قیمت</th><th>تا sweep</th><th>وضعیت</th></tr>`;
@@ -731,7 +783,7 @@ function renderSetup() {
     $("btnReveal").style.display = "";
     setStatus("keyPill", "کلید: " + shortDid(did), "ok");
   } else {
-    $("keyBox").innerHTML = "هنوز کلیدی ساخته نشده است. برای شرکت در مسابقه یک کلید Ed25519 لازم است — هویت دیگری بررسی نمی‌شود.";
+    $("keyBox").innerHTML = "هنوز کلیدی ساخته نشده است. برای شرکت در مسابقه یک کلید لازم است — هویت دیگری بررسی نمی‌شود.";
     $("btnReveal").style.display = "none";
     setStatus("keyPill", "بدون کلید", "bad");
   }
@@ -757,6 +809,18 @@ function renderSetup() {
   else if (minted) setStatus("regPill", "mint شد ✓ (۱۰,۰۰۰ POLF)", "ok");
   else if (registered) setStatus("regPill", "ثبت‌نام ثبت شد — در انتظار sweep", "ok");
   else setStatus("regPill", "ثبت‌نام نشده", "bad");
+
+  let hasTrade = false;
+  if (did) {
+    for (const m of (cache.close1 && cache.close1.messages) || []) {
+      const o = parseObj(m);
+      if (o && o.t === "trade" && o.terms &&
+          (o.terms.maker === did || o.taker === did || m.from === did)) { hasTrade = true; break; }
+    }
+  }
+  $("step1").classList.toggle("done", !!did);
+  $("step2").classList.toggle("done", !!(registered || minted));
+  $("step3").classList.toggle("done", hasTrade);
 }
 
 function updateFee() {
@@ -772,7 +836,7 @@ function validateTrade() {
   const qty = $("qty").value.trim();
   const px = $("px").value.trim();
   const until = parseInt($("until").value, 10);
-  if (!S.did) errs.push("اول در تب راه‌اندازی کلید بسازید.");
+  if (!S.did) errs.push("اول در تب «شروع» کلید بسازید.");
   if (c && c.locked) errs.push("مسابقه قفل شده است.");
   if (!AMOUNT_RE.test(qty) || parseFloat(qty) < 0.1) errs.push("تعداد باید ≥ 0.1 و حداکثر دو رقم اعشار باشد.");
   if (!AMOUNT_RE.test(px) || parseFloat(px) <= 0) errs.push("قیمت باید عدد معتبر (گام 0.01) باشد.");
