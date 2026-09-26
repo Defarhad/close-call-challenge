@@ -122,6 +122,7 @@
     padding: 7px 14px;
     cursor: pointer;
   }
+  button.ghost:disabled { opacity: .35; cursor: not-allowed; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
   .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
   .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
@@ -376,7 +377,7 @@
         <button class="ghost" id="btnOffersHome" style="padding:3px 10px; font-size:13px; display:none">برگشت به close1</button>
       </span>
     </h2>
-    <div class="muted">فقط پیشنهادهایی که هنوز کسی قبول نکرده و در flow اخیر باطل نشده‌اند (۱۰۰ پیام آخر اتاق).</div>
+    <div class="muted">فقط پیشنهادهایی که هنوز کسی قبول نکرده و در flow اخیر باطل نشده‌اند (۱۰۰ پیام آخر اتاق). ردیف‌های «منقضی» (until از sweep گذشته) دیگر قبول‌پذیر نیستند.</div>
     <div id="offersBox" class="muted">—</div>
   </div>
 
@@ -680,15 +681,16 @@ function renderOffers() {
   for (const entry of rows) {
     const t = entry.terms || {};
     const mine = t.maker === S.did;
-    html += `<tr>
+    const dead = S.contest && typeof t.until === "number" && t.until < S.contest.sweep + 1;
+    html += `<tr${dead ? ' style="opacity:.5"' : ""}>
       <td class="num">${esc(entry.id)}</td>
       <td><span class="badge ${t.side === "buy" ? "buy" : "sell"}">${t.side === "buy" ? "خرید" : "فروش"}</span></td>
       <td class="num">${esc(t.qty)}</td>
       <td class="num">${esc(t.px)}</td>
-      <td class="num">${esc(t.until)}</td>
+      <td class="num">${esc(t.until)}${dead ? ' <span class="badge vo">منقضی</span>' : ""}</td>
       <td class="num" title="${esc(t.maker)}">${shortDid(t.maker)}${mine ? " (من)" : ""}</td>
       <td>
-        <button class="ghost" data-act="accept" data-id="${esc(entry.id)}">قبول</button>
+        <button class="ghost" data-act="accept" data-id="${esc(entry.id)}"${dead ? ' disabled title="پیشنهاد منقضی شده — قبول آن باطل می‌شود"' : ""}>قبول</button>
         <button class="ghost" data-act="copy" data-id="${esc(entry.id)}">کپی</button>
       </td>
     </tr>`;
@@ -1209,6 +1211,11 @@ async function inspectOffer() {
         <div>taker: <span class="num">${esc(t.taker)}</span></div>
         <div>تا sweep: <span class="num">${esc(t.until)}</span></div>
       </div>`;
+    if (S.contest && typeof t.until === "number" && t.until < S.contest.sweep + 1) {
+      out.innerHTML += `<div class="err">✗ این پیشنهاد منقضی شده است (until=${esc(t.until)} &lt; sweep فعلی ${S.contest.sweep}+1) — قبول آن باطل (void) می‌شود و قبولش غیرفعال است.</div>`;
+      $("btnAccept").disabled = true;
+      return null;
+    }
     $("btnAccept").disabled = false;
     return res;
   } catch (err) {

@@ -817,6 +817,11 @@ def route_accept(body: dict) -> dict:
         if contest_payload(state)["locked"]:
             raise ApiError("مسابقه قفل شده (بعد از 4 اکتبر 09:00 UTC)")
         terms, msig = parse_offer(body)
+        if terms["until"] < current_sweep() + 1:
+            raise ApiError(
+                f"پیشنهاد منقضی شده است (until={terms['until']}، sweep فعلی {current_sweep()}) — "
+                "قبول آن باطل (void) می‌شود"
+            )
         named = terms.get("taker")
         if named != "any" and named != taker_did:
             raise ApiError("این پیشنهاد برای کلید دیگری است؛ باید با همان کلید قبول شود")
